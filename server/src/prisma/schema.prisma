@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  email     String     @unique
+  password  String
+  streak    Int        @default(7)
+  xp        Int        @default(0)
+  createdAt DateTime   @default(now())
+  progress  Progress[]
+}
+
+model Word {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  english    String
+  vietnamese String
+  phonetic   String?
+  example    String?
+  topic      String
+  difficulty String     // 'easy', 'medium', 'hard'
+  progress   Progress[]
+}
+
+model Progress {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  wordId      String   @db.ObjectId
+  reviewCount Int      @default(0)
+  nextReview  DateTime @default(now())
+  isLearned   Boolean  @default(false)
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  word        Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordId])
+}
