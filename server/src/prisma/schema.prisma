@@ -38,6 +38,8 @@ model Progress {
   reviewCount Int      @default(0)
   nextReview  DateTime @default(now())
   isLearned   Boolean  @default(false)
+  isBookmarked Boolean  @default(false)
+  createdAt   DateTime @default(now())
   
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   word        Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)

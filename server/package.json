@@ -1,6 +1,7 @@
 {
+  "type": "module",
   "scripts": {
-    "dev": "nodemon src/index.ts",
+    "dev": "npx tsx watch src/index.ts",
     "build": "tsc",
     "db:generate": "prisma generate --schema=src/prisma/schema.prisma",
     "db:push": "prisma db push --schema=src/prisma/schema.prisma"

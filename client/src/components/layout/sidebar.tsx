@@ -3,10 +3,12 @@ import { NavLink } from 'react-router-dom'; // Đúng chuẩn stack
 import {
   LayoutDashboard, Map, BookOpen, BookMarked,
   Mic, MessageSquare, Layers, BookHeart, Star, ChevronRight,
-  Flame, Trophy, Sun, Moon, Menu, X // Bổ sung các icon còn thiếu từ mẫu
+  Flame, Trophy, Sun, Moon, Menu, X, // Bổ sung các icon còn thiếu từ mẫu
+  LogOut, LogIn
 } from 'lucide-react';
-import { cn } from '../../lib/utils'; // Giữ nguyên util xịn vừa tạo[cite: 1]
+import { cn } from '../../lib/utils'; // Giữ nguyên util xịn vừa tạo
 import { useAppStore } from '../../store/useAppStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const menuItems = [
   { path: '/', icon: LayoutDashboard, label: 'Tổng quan', group: 'main' },
@@ -32,6 +34,11 @@ export function Sidebar() {
   const streak = useAppStore((state) => state.streak);
   const theme = useAppStore((state) => state.theme);
   const toggleTheme = useAppStore((state) => state.toggleTheme);
+  
+  // Zustand Auth Store state
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   // 3. Tự tính toán các Derived State tại đây
   const level = Math.floor(xp / 500) + 1; // ← Tự tính level dựa trên xp
   const xpToNextLevel = (level * 500) - xp; // ← Tự tính số XP còn lại để lên cấp
@@ -143,11 +150,47 @@ export function Sidebar() {
 
         <button
           onClick={toggleTheme}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-foreground hover:bg-accent/80 transition-all text-sm font-medium"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-foreground hover:bg-accent/80 transition-all text-sm font-medium cursor-pointer"
         >
           {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-500" />}
           <span>{darkMode ? 'Chế độ sáng' : 'Chế độ tối'}</span>
         </button>
+
+        {/* Khu vực thông tin Tài khoản / Đăng nhập */}
+        {isAuthenticated && user ? (
+          <div className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-border bg-accent/40 mt-1">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 select-none">
+                {user.email[0].toUpperCase()}
+              </div>
+              <div className="truncate">
+                <p className="text-foreground text-xs font-semibold truncate leading-tight">
+                  {user.email.split('@')[0]}
+                </p>
+                <p className="text-muted-foreground text-[10px] truncate leading-tight">
+                  {user.email}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                logout();
+              }}
+              title="Đăng xuất"
+              className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0 cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <NavLink
+            to="/login"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-all text-sm font-semibold mt-1"
+          >
+            <LogIn className="w-4 h-4 text-primary shrink-0" />
+            <span>Đăng nhập</span>
+          </NavLink>
+        )}
       </div>
     </div>
   );

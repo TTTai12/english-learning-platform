@@ -6,33 +6,34 @@ import FlashcardsPage from './pages/Flashcards';
 import VocabularyTopicsPage from './pages/Vocabulary';
 import VocabNotebookPage from './pages/VocabNotebook';
 import { useAppStore } from './store/useAppStore';
+import { useAuthStore } from './store/useAuthStore';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
 export default function App() {
   const theme = useAppStore((state) => state.theme);
+  const getMe = useAuthStore((state) => state.getMe);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
+  // Khôi phục phiên đăng nhập từ token trong localStorage khi mở web
+  useEffect(() => {
+    getMe();
+  }, [getMe]);
+
   return (
     <Routes>
-      {/* ================= ROUTES CÔNG KHAI (Không cần đăng nhập) ================= */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-
-      {/* ================= ROUTES ĐƯỢC BẢO VỆ (Phải đăng nhập) ================= */}
-      {/* 2. Bọc toàn bộ AppLayout và các trang con bên trong ProtectedRoute */}
-      <Route element={<ProtectedRoute />}>
-
-        {/* Tất cả các trang nằm dưới AppLayout đều sẽ được bảo vệ */}
-        <Route path="/" element={<AppLayout />}>
-
-          {/* Trang chính Dashboard */}
-          <Route index element={<Dashboard />} />
-
+      {/* 1. Routes công khai có Sidebar (Ai cũng xem được) */}
+      <Route element={<AppLayout />}>
+        {/* Trang chính Dashboard */}
+        <Route index element={<Dashboard />} />
+        {/* Route cho trang flashcards */}
+        <Route path="flashcards" element={<FlashcardsPage />} />
+        {/* 2. Routes được bảo vệ (Phải đăng nhập mới được học) */}
+        <Route element={<ProtectedRoute />}>
           {/* Trang chính roadmap*/}
           <Route
             path="roadmap"
@@ -59,8 +60,7 @@ export default function App() {
             element={<div className="text-foreground p-4">Trang Hội thoại (Đang phát triển)</div>}
           />
 
-          {/* Route cho trang flashcards */}
-          <Route path="flashcards" element={<FlashcardsPage />} />
+
 
           {/* Route cho trang vocab notebook */}
           <Route
@@ -69,6 +69,10 @@ export default function App() {
           />
         </Route>
       </Route>
+
+      {/* 3. Routes công khai không có Sidebar */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
     </Routes>
   );
 }
