@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Search, Volume2, BookmarkPlus, BookmarkCheck, ChevronLeft, CheckCircle, Sparkles } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore'
 import confetti from 'canvas-confetti';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchWordsByTopic, toggleWordBookmark, toggleWordLearned } from '../services/vocab';
+
 /**
  * ════════════════════════════════════════════════════════════════════════════════
  * PHẦN 1: ĐỊNH NGHĨA TYPES & CONSTANTS
@@ -22,6 +25,7 @@ interface Topic {
 
 /** Interface định nghĩa cấu trúc của một từ vựng trong bài học */
 interface Word {
+  id: string;
   english: string;
   vietnamese: string;
   phonetic: string;
@@ -48,29 +52,29 @@ const topics: Topic[] = [
  * - Key là ID của chủ đề, Value là mảng các từ trong chủ đề
  * - Mỗi từ có: từ tiếng Anh, dịch tiếng Việt, phiên âm, ví dụ, độ khó
  */
-const wordsByTopic: Record<string, Word[]> = {
-  daily: [
-    { english: 'Collaborate', vietnamese: 'Cộng tác, hợp tác', phonetic: '/kəˈlæbəreɪt/', example: 'We collaborate with international teams on this project.', difficulty: 'medium' },
-    { english: 'Achievement', vietnamese: 'Thành tích, thành tựu', phonetic: '/əˈtʃiːvmənt/', example: 'This is a great achievement for our team.', difficulty: 'easy' },
-    { english: 'Enthusiastic', vietnamese: 'Nhiệt tình, hăng hái', phonetic: '/ɪnˌθuːziˈæstɪk/', example: 'She is very enthusiastic about learning new skills.', difficulty: 'hard' },
-  ],
-  business: [
-    { english: 'Negotiation', vietnamese: 'Đàm phán, thương lượng', phonetic: '/nɪˌɡoʊʃiˈeɪʃn/', example: 'The negotiation lasted three hours but ended successfully.', difficulty: 'hard' },
-    { english: 'Stakeholder', vietnamese: 'Bên liên quan, cổ đông', phonetic: '/ˈsteɪkhoʊldər/', example: 'We need to present the plan to all stakeholders.', difficulty: 'medium' },
-  ],
-  travel: [
-    { english: 'Itinerary', vietnamese: 'Lịch trình chuyến đi', phonetic: '/aɪˈtɪnəreri/', example: 'Please check your itinerary for hotel check-in times.', difficulty: 'hard' },
-  ],
-  food: [
-    { english: 'Ingredient', vietnamese: 'Nguyên liệu, thành phần', phonetic: '/ɪnˈɡriːdiənt/', example: 'The secret ingredient makes this dish special.', difficulty: 'medium' },
-  ],
-  health: [
-    { english: 'Symptom', vietnamese: 'Triệu chứng', phonetic: '/ˈsɪmptəm/', example: 'What symptoms have you been experiencing?', difficulty: 'medium' },
-  ],
-  technology: [
-    { english: 'Algorithm', vietnamese: 'Thuật toán', phonetic: '/ˈælɡərɪðəm/', example: 'The algorithm processes millions of data points.', difficulty: 'medium' },
-  ],
-};
+// const wordsByTopic: Record<string, Word[]> = {
+//   daily: [
+//     { english: 'Collaborate', vietnamese: 'Cộng tác, hợp tác', phonetic: '/kəˈlæbəreɪt/', example: 'We collaborate with international teams on this project.', difficulty: 'medium' },
+//     { english: 'Achievement', vietnamese: 'Thành tích, thành tựu', phonetic: '/əˈtʃiːvmənt/', example: 'This is a great achievement for our team.', difficulty: 'easy' },
+//     { english: 'Enthusiastic', vietnamese: 'Nhiệt tình, hăng hái', phonetic: '/ɪnˌθuːziˈæstɪk/', example: 'She is very enthusiastic about learning new skills.', difficulty: 'hard' },
+//   ],
+//   business: [
+//     { english: 'Negotiation', vietnamese: 'Đàm phán, thương lượng', phonetic: '/nɪˌɡoʊʃiˈeɪʃn/', example: 'The negotiation lasted three hours but ended successfully.', difficulty: 'hard' },
+//     { english: 'Stakeholder', vietnamese: 'Bên liên quan, cổ đông', phonetic: '/ˈsteɪkhoʊldər/', example: 'We need to present the plan to all stakeholders.', difficulty: 'medium' },
+//   ],
+//   travel: [
+//     { english: 'Itinerary', vietnamese: 'Lịch trình chuyến đi', phonetic: '/aɪˈtɪnəreri/', example: 'Please check your itinerary for hotel check-in times.', difficulty: 'hard' },
+//   ],
+//   food: [
+//     { english: 'Ingredient', vietnamese: 'Nguyên liệu, thành phần', phonetic: '/ɪnˈɡriːdiənt/', example: 'The secret ingredient makes this dish special.', difficulty: 'medium' },
+//   ],
+//   health: [
+//     { english: 'Symptom', vietnamese: 'Triệu chứng', phonetic: '/ˈsɪmptəm/', example: 'What symptoms have you been experiencing?', difficulty: 'medium' },
+//   ],
+//   technology: [
+//     { english: 'Algorithm', vietnamese: 'Thuật toán', phonetic: '/ˈælɡərɪðəm/', example: 'The algorithm processes millions of data points.', difficulty: 'medium' },
+//   ],
+// };
 
 /**
  * Cấu hình hiển thị mức độ khó của từ vựng
@@ -105,7 +109,6 @@ export default function VocabularyPage() {
   // 3. Lấy hàm dùng để cộng điểm kinh nghiệm (hàm hành động)
   const addXP = useAppStore((state) => state.addXP);
 
-
   /**
    * ════ STATE MANAGEMENT ════
    * - selectedTopic: Chủ đề đang được chọn (null = hiển thị danh sách chủ đề)
@@ -118,6 +121,24 @@ export default function VocabularyPage() {
   const [learnedWords, setLearnedWords] = useState<Set<string>>(new Set());
   const [justSaved, setJustSaved] = useState<string | null>(null);
 
+  const { data: words = [], isLoading } = useQuery({
+    queryKey: ['words', selectedTopic?.id],  // ← cache riêng theo từng topic
+    queryFn: () => fetchWordsByTopic(selectedTopic!.id),  // truyền string id, không phải object
+    enabled: !!selectedTopic,  // chỉ gọi API khi đã chọn chủ đề
+  });
+  const queryClient = useQueryClient();
+  const bookmarkMutation = useMutation({
+    mutationFn: toggleWordBookmark,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['words', selectedTopic?.id] }),
+
+  });
+
+  const learnedMutation = useMutation({
+    mutationFn: toggleWordLearned,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['words', selectedTopic?.id] }),
+
+  });
+
   /**
    * ════ COMPUTED VALUES (Biến phái sinh) ════
    * Những giá trị được tính toán từ state, tự động cập nhật khi state thay đổi
@@ -129,22 +150,23 @@ export default function VocabularyPage() {
   );
 
   // Lấy danh sách từ của chủ đề được chọn (TẦNG 2)
-  // Nếu chưa chọn chủ đề, mảng sẽ rỗng
-  const words = selectedTopic ? wordsByTopic[selectedTopic.id] || [] : [];
+  // words đã được lấy từ useQuery ở trên (dữ liệu thực từ API)
 
   // Kiểm tra user đã học xong tất cả từ trong chủ đề hiện tại
   // Dùng để hiển thị banner thành công 🎉
   const allLearned = words.length > 0 && words.every((w) => learnedWords.has(w.english));
 
-  const handleLearnWord = (english: string) => {
+  const handleLearnWord = (word: Word) => {
     setLearnedWords((prev) => {
       const next = new Set(prev);
-      if (next.has(english)) {
-        next.delete(english);
+      if (next.has(word.english)) {
+        next.delete(word.english);
+        learnedMutation.mutate(word.id);
       } else {
-        next.add(english);
+        next.add(word.english);
+        learnedMutation.mutate(word.id)
         addXP(10);
-        if (words.every((w) => w.english === english || next.has(w.english))) {
+        if (words.every((w) => w.english === word.english || next.has(w.english))) {
           try { confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 } }); } catch (e) { }
         }
       }
@@ -170,7 +192,9 @@ export default function VocabularyPage() {
       phonetic: word.phonetic,
       example: word.example,
       topic: selectedTopic.name,
+
     });
+    bookmarkMutation.mutate(word.id);
     setJustSaved(word.english);
     addXP(5);
     setTimeout(() => setJustSaved(null), 2000);
@@ -296,108 +320,116 @@ export default function VocabularyPage() {
           </div>
         </div>
       ) : (
-        /**
-          * ════ TẦNG 2: DANH SÁCH TỪ CHI TIẾT (Hiển thị khi selectedTopic !== null)
-          * 
-          * Gồm:
-          * 1. Banner thành công nếu đã học hết (allLearned = true)
-          * 2. Danh sách từ (từng cái là 1 card)
-          * 3. Mỗi card từ có:
-          *    - Từ tiếng Anh + button nghe phát âm
-          *    - Phiên âm IPA
-          *    - Badge mức độ khó (easy/medium/hard)
-          *    - Dịch nghĩa tiếng Việt
-          *    - Ví dụ sử dụng (trong hộp muted)
-          *    - Button bookmark lưu từ
-          *    - Button "Đánh dấu đã học" (toggle state)
-          */
-        <div className="space-y-4">
+        <>
           {/**
+            * ════ TẦNG 2: DANH SÁCH TỪ CHI TIẾT (Hiển thị khi selectedTopic !== null)
+            *
+            * Gồm:
+            * 1. Banner thành công nếu đã học hết (allLearned = true)
+            * 2. Danh sách từ (từng cái là 1 card)
+            * 3. Mỗi card từ có:
+            *    - Từ tiếng Anh + button nghe phát âm
+            *    - Phiên âm IPA
+            *    - Badge mức độ khó (easy/medium/hard)
+            *    - Dịch nghĩa tiếng Việt
+            *    - Ví dụ sử dụng (trong hộp muted)
+            *    - Button bookmark lưu từ
+            *    - Button "Đánh dấu đã học" (toggle state)
+            */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+              <span className="animate-pulse">⏳ Đang tải từ vựng...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/**
             * Banner thành công - Hiển thị khi user đã đánh dấu tất cả từ "đã học"
             * - Có animation fade-in
             * - Gradient background từ teal đến emerald
             * - Thông báo bonus XP
             */}
-          {allLearned && (
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl p-4 flex items-center gap-3 shadow-xs animate-in fade-in-50">
-              <Sparkles className="w-5 h-5 fill-current text-amber-300" />
-              <div>
-                <p className="text-sm font-bold">🎉 Xuất sắc! Bạn đã cày xong chủ đề này!</p>
-                <p className="text-xs opacity-90">+{words.length * 10} XP đã được nạp thẳng vào tài khoản học viên.</p>
+              {allLearned && (
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl p-4 flex items-center gap-3 shadow-xs animate-in fade-in-50">
+                  <Sparkles className="w-5 h-5 fill-current text-amber-300" />
+                  <div>
+                    <p className="text-sm font-bold">🎉 Xuất sắc! Bạn đã cày xong chủ đề này!</p>
+                    <p className="text-xs opacity-90">+{words.length * 10} XP đã được nạp thẳng vào tài khoản học viên.</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {words.map((word) => {
+                  const isSaved = isWordSaved(word.english);
+                  const isLearned = learnedWords.has(word.english);
+                  const diff = difficultyConfig[word.difficulty];
+
+                  return (
+                    <div
+                      key={word.english}
+                      className={`bg-card border rounded-2xl p-6 transition-all relative ${isLearned
+                        ? 'border-emerald-500/20 bg-emerald-500/[0.01]'
+                        : 'border-border hover:border-primary/20 shadow-xs'
+                        }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1.5 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-foreground text-xl font-bold tracking-tight">{word.english}</h3>
+                            <button
+                              onClick={() => speak(word.english)}
+                              className="p-1.5 hover:bg-accent rounded-lg text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                            >
+                              <Volume2 className="w-4 h-4" />
+                            </button>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${diff.color}`}>
+                              {diff.label}
+                            </span>
+                            {isLearned && (
+                              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                                <CheckCircle className="w-3.5 h-3.5 fill-current text-emerald-500/20" />
+                                Đã học
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-muted-foreground text-xs font-mono tracking-wide">{word.phonetic}</p>
+                          <p className="text-foreground text-base font-semibold pt-0.5">{word.vietnamese}</p>
+
+                          <div className="text-xs text-muted-foreground flex gap-1.5 items-start leading-relaxed bg-muted/30 p-3 rounded-xl border border-border/40 mt-2">
+                            <span className="select-none">📝</span>
+                            <p className="italic">{word.example}</p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleSaveWord(word)}
+                          className={`p-2 rounded-xl transition-all border cursor-pointer ${isSaved
+                            ? 'border-amber-500/20 text-amber-500 bg-amber-500/5'
+                            : 'border-transparent text-muted-foreground hover:text-primary hover:bg-accent'
+                            }`}
+                        >
+                          {isSaved ? <BookmarkCheck className="w-4.5 h-4.5 fill-current" /> : <BookmarkPlus className="w-4.5 h-4.5" />}
+                        </button>
+                      </div>
+
+                      {/* NÚT LỚN ĐÁNH DẤU HOÀN TOÀN THEO ẢNH FIGMA (image_cdb8b0.png) */}
+                      <button
+                        onClick={() => handleLearnWord(word)}
+                        className={`mt-4 w-full py-2.5 text-xs font-bold rounded-xl transition-all border cursor-pointer ${isLearned
+                          ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/25 hover:bg-emerald-500/20'
+                          : 'bg-muted text-primary border-border hover:bg-primary/5'
+                          }`}
+                      >
+                        {isLearned ? '✓ Đã học xong (Bấm để hủy)' : '✓ Đánh dấu đã học (+10 XP)'}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
-
-          <div className="space-y-3">
-            {words.map((word) => {
-              const isSaved = isWordSaved(word.english);
-              const isLearned = learnedWords.has(word.english);
-              const diff = difficultyConfig[word.difficulty];
-
-              return (
-                <div
-                  key={word.english}
-                  className={`bg-card border rounded-2xl p-6 transition-all relative ${isLearned
-                    ? 'border-emerald-500/20 bg-emerald-500/[0.01]'
-                    : 'border-border hover:border-primary/20 shadow-xs'
-                    }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1.5 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-foreground text-xl font-bold tracking-tight">{word.english}</h3>
-                        <button
-                          onClick={() => speak(word.english)}
-                          className="p-1.5 hover:bg-accent rounded-lg text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                        >
-                          <Volume2 className="w-4 h-4" />
-                        </button>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${diff.color}`}>
-                          {diff.label}
-                        </span>
-                        {isLearned && (
-                          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-                            <CheckCircle className="w-3.5 h-3.5 fill-current text-emerald-500/20" />
-                            Đã học
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-muted-foreground text-xs font-mono tracking-wide">{word.phonetic}</p>
-                      <p className="text-foreground text-base font-semibold pt-0.5">{word.vietnamese}</p>
-
-                      <div className="text-xs text-muted-foreground flex gap-1.5 items-start leading-relaxed bg-muted/30 p-3 rounded-xl border border-border/40 mt-2">
-                        <span className="select-none">📝</span>
-                        <p className="italic">{word.example}</p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleSaveWord(word)}
-                      className={`p-2 rounded-xl transition-all border cursor-pointer ${isSaved
-                        ? 'border-amber-500/20 text-amber-500 bg-amber-500/5'
-                        : 'border-transparent text-muted-foreground hover:text-primary hover:bg-accent'
-                        }`}
-                    >
-                      {isSaved ? <BookmarkCheck className="w-4.5 h-4.5 fill-current" /> : <BookmarkPlus className="w-4.5 h-4.5" />}
-                    </button>
-                  </div>
-
-                  {/* NÚT LỚN ĐÁNH DẤU HOÀN TOÀN THEO ẢNH FIGMA (image_cdb8b0.png) */}
-                  <button
-                    onClick={() => handleLearnWord(word.english)}
-                    className={`mt-4 w-full py-2.5 text-xs font-bold rounded-xl transition-all border cursor-pointer ${isLearned
-                      ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/25 hover:bg-emerald-500/20'
-                      : 'bg-muted text-primary border-border hover:bg-primary/5'
-                      }`}
-                  >
-                    {isLearned ? '✓ Đã học xong (Bấm để hủy)' : '✓ Đánh dấu đã học (+10 XP)'}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        </>
       )}
 
       {/**

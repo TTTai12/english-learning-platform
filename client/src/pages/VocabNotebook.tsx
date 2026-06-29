@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, Trash2, Volume2, BookHeart, Star, Clock, ArrowDownUp } from 'lucide-react';
-import { useAppStore } from '../store/useAppStore';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchBookmarkedWords, toggleWordBookmark } from '../services/vocab';
 
 /**
  * ════════════════════════════════════════════════════════════════════════════════
@@ -26,12 +27,21 @@ export default function VocabNotebookPage() {
   /**
    * ════ STATE MANAGEMENT ════
    */
-  const savedWords = useAppStore((state) => state.savedWords);
-  const removeWord = useAppStore((state) => state.removeWord); // Lấy từ context App
+
   const [search, setSearch] = useState(''); // Chuỗi tìm kiếm
   const [sort, setSort] = useState<SortOption>('newest'); // Lựa chọn sắp xếp
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null); // ID từ đang chờ confirm xóa
+  const queryClient = useQueryClient();
 
+  const deleteMutation = useMutation({
+    mutationFn: toggleWordBookmark,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookmarks'] }),
+  });
+
+  const { data: bookmarkedWords = [], isLoading } = useQuery({
+    queryKey: ['bookmarks'],
+    queryFn: fetchBookmarkedWords,
+  });
   /**
    * ════ UTILITY FUNCTIONS ════
    */
@@ -50,7 +60,7 @@ export default function VocabNotebookPage() {
 
   /**
    * ════ COMPUTED VALUES (Biến phái sinh) ════
-   * Tự động tính toán từ savedWords + search + sort
+   * Tự động tính toán từ  bookmarkedWords + search + sort
    */
 
   /**
@@ -58,7 +68,7 @@ export default function VocabNotebookPage() {
    * 1. Filter: tìm kiếm trong english, vietnamese, topic
    * 2. Sort: theo newest/oldest/a-z
    */
-  const filtered = savedWords
+  const filtered = bookmarkedWords
     .filter((w) =>
       w.english.toLowerCase().includes(search.toLowerCase()) ||
       w.vietnamese.toLowerCase().includes(search.toLowerCase()) ||
@@ -71,10 +81,10 @@ export default function VocabNotebookPage() {
     });
 
   // Số lượng chủ đề duy nhất (dùng Set để deduplicate)
-  const topicGroups = Array.from(new Set(savedWords.map((w) => w.topic)));
+  const topicGroups = Array.from(new Set(bookmarkedWords.map((w) => w.topic)));
 
   // Đếm từ đã đến hạn ôn tập (nextReview <= hôm nay)
-  const dueWordsCount = savedWords.filter((w) => new Date(w.nextReview) <= new Date()).length;
+  const dueWordsCount = bookmarkedWords.filter((w) => new Date(w.nextReview) <= new Date()).length;
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -89,13 +99,13 @@ export default function VocabNotebookPage() {
       <div>
         <h2 className="text-foreground text-2xl font-bold tracking-tight mb-1">Sổ tay từ vựng cá nhân</h2>
         <p className="text-muted-foreground text-sm font-medium">
-          {savedWords.length > 0
-            ? `${savedWords.length} từ đã lưu từ ${topicGroups.length} chủ đề`
+          {bookmarkedWords.length > 0
+            ? `${bookmarkedWords.length} từ đã lưu từ ${topicGroups.length} chủ đề`
             : 'Lưu từ vựng ở bất kỳ đâu để ôn tập tại đây'}
         </p>
       </div>
 
-      {savedWords.length === 0 ? (
+      {bookmarkedWords.length === 0 ? (
         /**
          * ════ EMPTY STATE - Hiển thị khi chưa lưu từ nào
          * Gồm:
@@ -134,7 +144,7 @@ export default function VocabNotebookPage() {
             */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { icon: BookHeart, label: 'Tổng từ', value: savedWords.length, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-500/10' },
+              { icon: BookHeart, label: 'Tổng từ', value: bookmarkedWords.length, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-500/10' },
               { icon: Star, label: 'Chủ đề', value: topicGroups.length, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10' },
               { icon: Clock, label: 'Cần ôn', value: dueWordsCount, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-500/10' },
             ].map((s, idx) => {
@@ -287,7 +297,7 @@ export default function VocabNotebookPage() {
                         {confirmDelete === word.id ? (
                           <div className="flex items-center gap-2 animate-in fade-in zoom-in duration-200">
                             <button
-                              onClick={() => { removeWord(word.id); setConfirmDelete(null); }}
+                              onClick={() => { deleteMutation.mutate(word.id); setConfirmDelete(null); }}
                               className="px-3 py-1.5 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg text-xs font-bold transition-colors cursor-pointer"
                             >
                               Xóa
