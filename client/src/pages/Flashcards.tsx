@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { 
-  Sparkles, ChevronLeft, ChevronRight, RotateCcw, 
-  CheckCircle, XCircle, Loader2, FileText, ArrowLeft 
+import {
+  Sparkles, ChevronLeft, ChevronRight, RotateCcw,
+  CheckCircle, XCircle, Loader2, FileText, ArrowLeft
 } from 'lucide-react';
 // Import component FlashCard con 3D xịn sò mình vừa làm ở Task 2.1
 import { FlashCard } from '../components/features/FlashCard';
 import type { Word, Difficulty } from '../types'; // Đảm bảo import đúng type strict mode
+import { useMutation } from '@tanstack/react-query';
+import { reviewWord } from '../services/vocab';
 
 /**
  * ════════════════════════════════════════════════════════════════════════════════
@@ -79,14 +81,14 @@ const extractWordsFromText = (text: string): ExtractableCard[] => {
   const found: ExtractableCard[] = [];
   const lower = text.toLowerCase(); // Convert thành lowercase để tìm kiếm case-insensitive
   let index = 1;
-  
+
   // Duyệt từng từ trong từ điển, kiểm tra có trong text không
   for (const [key, card] of Object.entries(wordMap)) {
     if (lower.includes(key)) {
       found.push({ id: String(index++), ...card });
     }
   }
-  
+
   // Nếu tìm được từ, trả về danh sách; nếu không, trả về từ mặc định
   return found.length > 0 ? found : [
     { id: '1', word: 'Enterprise', meaning: 'Doanh nghiệp lớn', phonetic: '/ˈentərpraɪz/', example: 'Enterprise software requires robust security.', topic: 'General', difficulty: 'medium', isSaved: false }
@@ -118,6 +120,12 @@ export default function FlashcardsPage() {
   const [knownCards, setKnownCards] = useState<Set<number>>(new Set()); // Set index của thẻ "đã biết"
   const [unknownCards, setUnknownCards] = useState<Set<number>>(new Set()); // Set index của thẻ "chưa biết"
   const [sessionDone, setSessionDone] = useState(false); // Phiên học hoàn thành?
+
+
+  const reviewMutation = useMutation({
+    mutationFn: ({ wordId, isCorrect }: { wordId: string; isCorrect: boolean }) =>
+      reviewWord(wordId, isCorrect),
+  });
 
   /**
    * ════ EVENT HANDLERS ════
@@ -166,8 +174,11 @@ export default function FlashcardsPage() {
    */
   const handleKnow = () => {
     setKnownCards((prev) => new Set(prev).add(currentIdx));
+    // TODO: Gọi reviewMutation.mutate với wordId = currentCard.id, isCorrect = true
+    reviewMutation.mutate({ wordId: currentCard.id, isCorrect: true });
     nextCard();
   };
+
 
   /**
    * Click nút "Chưa thuộc kĩ"
@@ -176,6 +187,8 @@ export default function FlashcardsPage() {
    */
   const handleDontKnow = () => {
     setUnknownCards((prev) => new Set(prev).add(currentIdx));
+    // TODO: Tương tự handleKnow nhưng truyền isCorrect = false
+    reviewMutation.mutate({ wordId: currentCard.id, isCorrect: false });
     nextCard();
   };
 
@@ -335,19 +348,19 @@ export default function FlashcardsPage() {
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1 text-emerald-500"><CheckCircle className="w-3 h-3" />{knownCards.size}</span>
               <span className="flex items-center gap-1 text-destructive"><XCircle className="w-3 h-3" />{unknownCards.size}</span>
-              <button 
-                onClick={() => { setCards([]); setText(''); }} 
+              <button
+                onClick={() => { setCards([]); setText(''); }}
                 className="text-muted-foreground hover:text-foreground text-[11px] font-bold flex items-center gap-1 cursor-pointer ml-2"
               >
                 <ArrowLeft className="w-3 h-3" /> Thoát học
               </button>
             </div>
           </div>
-          
+
           <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-300" 
-              style={{ width: `${progressPercent}%` }} 
+            <div
+              className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
 

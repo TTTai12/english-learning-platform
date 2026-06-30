@@ -62,3 +62,19 @@ export const fetchBookmarkedWords = async () => {
     }
     return response.json();
 };
+// 5. Gửi kết quả ôn tập flashcard (Spaced Repetition)
+// wordId: MongoDB id của từ, isCorrect: true = nhớ, false = quên
+export const reviewWord = async (wordId: string, isCorrect: boolean) => {
+    const response = await fetch(`${API_URL}/review/${wordId}`, {
+        method: 'POST',
+        headers: getHeaders(),
+        // TODO: thêm body JSON với { isCorrect }
+        // Gợi ý: body phải là string JSON → dùng JSON.stringify(...)
+        body: JSON.stringify({ isCorrect }),
+    });
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Lỗi khi cập nhật tiến độ ôn tập');
+    }
+    return response.json();
+};

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getWordsByTopic, toggleBookmark, toggleLearned, getBookmarkedWords } from '../controllers/vocabController.js';
+import { getWordsByTopic, toggleBookmark, toggleLearned, getBookmarkedWords, reviewWord } from '../controllers/vocabController.js';
 import { verifyToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -9,5 +9,6 @@ router.get('/', verifyToken as any, getWordsByTopic);
 router.post('/bookmark/:wordId', verifyToken as any, toggleBookmark);
 router.post('/learned/:wordId', verifyToken as any, toggleLearned);
 router.get('/bookmarks', verifyToken as any, getBookmarkedWords);
+router.post('/review/:wordId', verifyToken as any, reviewWord);
 
 export default router;

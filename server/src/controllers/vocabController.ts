@@ -181,3 +181,63 @@ export const getBookmarkedWords = async (req: Request, res: Response): Promise<v
         res.status(500).json({ message: 'Có lỗi xảy ra trên server' });
     }
 };
+// Cách đúng:
+export const reviewWord = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { wordId } = req.params;
+        const { isCorrect } = req.body;  // ← true hoặc false
+        const userId = (req as any).userId;
+
+        if (typeof wordId !== 'string' || typeof isCorrect !== 'boolean') {
+            res.status(400).json({ message: 'Dữ liệu đầu vào không hợp lệ' });
+            return;
+        }
+
+        // 1. Lấy Progress hiện tại của user cho từ này
+        const progress = await prisma.progress.findUnique({
+            where: { userId_wordId: { userId, wordId } }
+        });
+
+        // 2. Tính reviewCount mới và nextReview
+        let newReviewCount: number;
+        let newNextReview: Date;
+
+        if (isCorrect) {
+            newReviewCount = (progress?.reviewCount || 0) + 1;
+            // Tính số ngày: [1, 3, 7, 14, 30] tùy reviewCount
+            const intervals = [1, 3, 7, 14, 30];
+            const days = intervals[Math.min(newReviewCount - 1, intervals.length - 1)];
+            newNextReview = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+        } else {
+            newReviewCount = 0;          // Reset về 0
+            newNextReview = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000); // Ngày mai
+        }
+
+        // 3. Upsert Progress với reviewCount và nextReview mới
+        const updated = await prisma.progress.upsert({
+            where: { userId_wordId: { userId, wordId } },
+            update: {
+                reviewCount: newReviewCount,
+                nextReview: newNextReview
+            },
+            create: {
+                userId,
+                wordId,
+                reviewCount: newReviewCount,
+                nextReview: newNextReview,
+                isLearned: true  // Lần đầu review đúng → đánh dấu đã học
+            }
+        })
+
+        // 4. Trả về response
+        res.status(200).json({
+            message: "Cập nhật tiến độ học thành công",
+            reviewCount: updated.reviewCount,
+            nextReview: updated.nextReview
+        })
+    } catch (error) {
+        console.error('Lỗi khi review từ vựng:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra trên server' });
+    }
+};
+
