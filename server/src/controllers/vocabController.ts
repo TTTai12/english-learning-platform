@@ -1,22 +1,25 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { extractWordsFromText } from '../services/geminiService.js';
 
 // 1. Lấy danh sách từ vựng theo chủ đề (topic) kèm trạng thái học/bookmark của user hiện tại
+// 1. Lấy danh sách từ vựng theo chủ đề (topic) hoặc độ khó (difficulty) kèm trạng thái
 export const getWordsByTopic = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { topic } = req.query;
-        const userId = (req as any).userId; // Được điền bởi middleware verifyToken (nếu có)
+        const { topic, difficulty } = req.query; // Đọc cả topic và difficulty từ query params
+        const userId = (req as any).userId;
 
-        if (!topic) {
-            res.status(400).json({ message: 'Thiếu chủ đề (topic)' });
-            return;
-        }
+        // Xây dựng điều kiện lọc động
+        const whereClause: any = {};
+        if (topic) whereClause.topic = topic as string;
+        if (difficulty) whereClause.difficulty = difficulty as string;
 
-        // TODO 1: Dùng prisma.word.findMany để lấy tất cả từ có topic trùng khớp
+        // Dùng prisma.word.findMany để lấy tất cả từ khớp điều kiện lọc
         const words = await prisma.word.findMany({
-            where: { topic: topic as string }
-        })
-        // TODO 2: Nếu có userId (đã đăng nhập), lấy tiến trình học (Progress) của user này cho những từ trên
+            where: whereClause
+        });
+
+        // Lấy tiến trình học (Progress) của user này cho những từ trên
         const progressList = await prisma.progress.findMany({
             where: {
                 userId,
@@ -24,8 +27,7 @@ export const getWordsByTopic = async (req: Request, res: Response): Promise<void
             }
         });
 
-        // TODO 3: Ghép dữ liệu từ vựng với tiến trình học (isLearned, isBookmarked)
-        // Nếu chưa đăng nhập hoặc chưa học từ này, mặc định là false
+        // Ghép dữ liệu từ vựng với tiến trình học (isLearned, isBookmarked)
         const wordsWithProgress = words.map((word) => {
             const userProgress = progressList.find((p) => p.wordId === word.id);
             return {
@@ -34,13 +36,14 @@ export const getWordsByTopic = async (req: Request, res: Response): Promise<void
                 isBookmarked: userProgress?.isBookmarked || false
             };
         });
-        // TODO 4: Trả về res.status(200).json(wordsWithProgress)
+
         res.status(200).json(wordsWithProgress);
     } catch (error) {
         console.error('Lỗi khi lấy từ vựng:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra trên server' });
     }
 };
+
 
 // 2. Lưu/Xóa từ vựng khỏi sổ tay (toggle bookmark)
 export const toggleBookmark = async (req: Request, res: Response): Promise<void> => {
@@ -238,6 +241,56 @@ export const reviewWord = async (req: Request, res: Response): Promise<void> => 
     } catch (error) {
         console.error('Lỗi khi review từ vựng:', error);
         res.status(500).json({ message: 'Có lỗi xảy ra trên server' });
+    }
+};
+
+// 6. API Gọi Gemini trích xuất từ vựng từ đoạn văn bản
+export const generateFlashcards = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { text } = req.body;
+
+        if (!text || typeof text !== 'string') {
+            res.status(400).json({ message: 'Văn bản gửi lên không hợp lệ' });
+            return;
+        }
+
+        // 1. Gọi AI trích xuất từ vựng (chứa english, vietnamese, topic, difficulty...)
+        const aiWords = await extractWordsFromText(text);
+
+        // 2. Duyệt qua danh sách từ AI trả về, kiểm tra và lưu vào Database nếu chưa tồn tại
+        const savedWords = [];
+        for (const word of aiWords) {
+            // Tìm xem từ vựng này đã tồn tại trong DB chưa (không phân biệt hoa thường)
+            let dbWord = await prisma.word.findFirst({
+                where: {
+                    english: {
+                        equals: word.english,
+                        mode: 'insensitive' // Không phân biệt hoa thường
+                    }
+                }
+            });
+
+            // Nếu chưa có, tự động tạo mới trong Database
+            if (!dbWord) {
+                dbWord = await prisma.word.create({
+                    data: {
+                        english: word.english,
+                        vietnamese: word.vietnamese,
+                        phonetic: word.phonetic,
+                        example: word.example,
+                        topic: word.topic,
+                        difficulty: word.difficulty
+                    }
+                });
+            }
+            savedWords.push(dbWord);
+        }
+
+        // 3. Trả về mảng từ vựng ĐÃ CÓ ID THẬT từ Database cho Client
+        res.status(200).json(savedWords);
+    } catch (error) {
+        console.error('Lỗi khi gọi Gemini API:', error);
+        res.status(500).json({ message: 'Lỗi server khi kết nối AI để tạo từ vựng' });
     }
 };
 

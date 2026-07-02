@@ -10,6 +10,9 @@ import { useAuthStore } from './store/useAuthStore';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import GrammarPage from './pages/Grammar';
+import SpeakingPage from './pages/Speaking';
+
 
 export default function App() {
   const theme = useAppStore((state) => state.theme);
@@ -43,24 +46,17 @@ export default function App() {
           <Route path="vocabulary" element={<VocabularyTopicsPage />} />
 
           {/* Route cho trang grammar */}
-          <Route
-            path="grammar"
-            element={<div className="text-foreground p-4">Trang Ngữ pháp (Đang phát triển)</div>}
-          />
+          <Route path="grammar" element={<GrammarPage />} />
+
 
           {/* Route cho trang speaking */}
-          <Route
-            path="speaking"
-            element={<div className="text-foreground p-4">Trang Luyện nói (Đang phát triển)</div>}
-          />
+          <Route path="speaking" element={<SpeakingPage />} />
 
           {/* Route cho trang conversation */}
           <Route
             path="conversation"
             element={<div className="text-foreground p-4">Trang Hội thoại (Đang phát triển)</div>}
           />
-
-
 
           {/* Route cho trang vocab notebook */}
           <Route

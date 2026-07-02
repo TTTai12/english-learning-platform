@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Search, Trash2, Volume2, BookHeart, Star, Clock, ArrowDownUp } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchBookmarkedWords, toggleWordBookmark } from '../services/vocab';
+import type { SavedWord } from '../types';
 
 /**
  * ════════════════════════════════════════════════════════════════════════════════
@@ -38,7 +39,7 @@ export default function VocabNotebookPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookmarks'] }),
   });
 
-  const { data: bookmarkedWords = [], isLoading } = useQuery({
+  const { data: bookmarkedWords = [] } = useQuery<SavedWord[]>({
     queryKey: ['bookmarks'],
     queryFn: fetchBookmarkedWords,
   });

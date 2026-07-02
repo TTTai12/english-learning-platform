@@ -7,7 +7,7 @@ import {
 import { FlashCard } from '../components/features/FlashCard';
 import type { Word, Difficulty } from '../types'; // Đảm bảo import đúng type strict mode
 import { useMutation } from '@tanstack/react-query';
-import { reviewWord } from '../services/vocab';
+import { reviewWord, generateFlashcardsFromText } from '../services/vocab';
 
 /**
  * ════════════════════════════════════════════════════════════════════════════════
@@ -126,6 +126,9 @@ export default function FlashcardsPage() {
     mutationFn: ({ wordId, isCorrect }: { wordId: string; isCorrect: boolean }) =>
       reviewWord(wordId, isCorrect),
   });
+  const generateMutation = useMutation({
+    mutationFn: (text: string) => generateFlashcardsFromText(text),
+  });
 
   /**
    * ════ EVENT HANDLERS ════
@@ -147,12 +150,34 @@ export default function FlashcardsPage() {
     setUnknownCards(new Set());
     setSessionDone(false);
 
-    // Giả lập độ trễ AI
-    await new Promise((r) => setTimeout(r, 1200));
-    const generated = extractWordsFromText(text);
-    setCards(generated);
-    setIsLoading(false);
+    try {
+      // 1. Gọi API thật từ Backend
+      const data = await generateMutation.mutateAsync(text);
+
+      // 2. Ánh xạ các thuộc tính trả về từ AI (english, vietnamese) 
+      // sang thuộc tính hiển thị trên UI (word, meaning)
+      const generated: ExtractableCard[] = data.map((item: any) => ({
+        id: item.id, // Sử dụng MongoDB ObjectId thật từ database trả về!
+        word: item.english,
+        meaning: item.vietnamese,
+        phonetic: item.phonetic,
+        example: item.example,
+        topic: item.topic,
+        difficulty: item.difficulty,
+        isSaved: item.isSaved || false
+      }));
+
+
+      // 3. Cập nhật state để hiển thị lên thẻ
+      setCards(generated);
+    } catch (error) {
+      console.error('Lỗi khi gọi API AI:', error);
+      alert('Không thể kết nối với AI để trích xuất từ vựng. Vui lòng kiểm tra lại Server hoặc API key.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   /**
    * Chuyển sang thẻ tiếp theo
@@ -248,12 +273,13 @@ export default function FlashcardsPage() {
             <textarea
               placeholder="Dán một đoạn văn bản tiếng Anh bất kỳ vào đây... Hệ thống AI sẽ quét, bóc tách các từ vựng cốt lõi và biên soạn bộ thẻ học cho bạn ngay lập tức."
               value={text}
+              maxLength={2000}
               onChange={(e) => setText(e.target.value)}
               className="w-full h-44 px-4 py-3 bg-muted/40 text-foreground rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none text-sm leading-relaxed"
             />
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-muted-foreground text-xs font-medium">{text.length} ký tự</span>
+              <span className="text-muted-foreground text-xs font-medium">{text.length}/ 2000 ký tự</span>
               <button
                 onClick={handleGenerate}
                 disabled={!text.trim() || isLoading}

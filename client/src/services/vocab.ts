@@ -78,3 +78,29 @@ export const reviewWord = async (wordId: string, isCorrect: boolean) => {
     }
     return response.json();
 };
+
+// 6. Gửi đoạn văn bản tiếng Anh lên Backend để gọi Gemini trích xuất từ vựng
+export const generateFlashcardsFromText = async (text: string) => {
+    const response = await fetch(`${API_URL}/generate-flashcards`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ text }),
+    });
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Lỗi khi kết nối AI để trích xuất từ vựng');
+    }
+    return response.json();
+};
+// 7. Lấy danh sách từ vựng từ Database lọc theo độ khó (phục vụ bài luyện nói)
+export const fetchWordsByDifficulty = async (difficulty: string) => {
+    const response = await fetch(`${API_URL}?difficulty=${difficulty}`, {
+        method: 'GET',
+        headers: getHeaders(),
+    });
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Không thể tải danh sách câu luyện nói');
+    }
+    return response.json();
+};

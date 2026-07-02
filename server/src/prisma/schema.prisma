@@ -46,3 +46,13 @@ model Progress {
 
   @@unique([userId, wordId])
 }
+
+model GrammarTopic {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  icon        String   // Tên icon đại diện (ví dụ: 'Timer', 'RefreshCw', 'Undo')
+  color       String   // Màu sắc theme (ví dụ: 'emerald', 'indigo', 'purple')
+  patterns    Json     // Lưu mảng các mẫu câu lồng nhau
+  createdAt   DateTime @default(now())
+}

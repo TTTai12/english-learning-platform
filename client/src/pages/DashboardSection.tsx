@@ -7,7 +7,11 @@ import { Link } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { useAppStore } from '../store/useAppStore'
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuthStore } from '../store/useAuthStore';
+import { fetchBookmarkedWords } from '../services/vocab';
+
 /**
  * ════════════════════════════════════════════════════════════════════════════════
  * PHẦN 1: MOCK DATA & CONSTANTS
@@ -63,14 +67,38 @@ const quickActions = [
  * 5. Quick Actions Grid (5 cột) - Điều hướng nhanh
  */
 export default function Dashboard() {
-  // 1. Lấy dữ liệu từ Zustand store
-  const xp = useAppStore((state) => state.xp);
-  const streak = useAppStore((state) => state.streak);
-  const savedWords = useAppStore((state) => state.savedWords);
-  const savedWordsCount = savedWords.length;
+  // 1. Lấy thông tin user và hàm getMe từ useAuthStore
+  // Gợi ý: Dùng hook useAuthStore giống như trong store/useAuthStore
+  const user = useAuthStore((state) => state.user);
+  const getMe = useAuthStore((state) => state.getMe);
+
+  // 2. Tự động gọi getMe() mỗi khi user vào trang Dashboard để đồng bộ dữ liệu mới nhất
+  useEffect(() => {
+    // TODO: Gọi hàm getMe() ở đây
+    getMe();
+  }, [getMe]);
+
+  // 3. Lấy danh sách từ đã bookmark từ API thực tế
+  // Gợi ý: Dùng useQuery với queryKey là ['bookmarks'] và queryFn là fetchBookmarkedWords
+  const { data: bookmarkedWords = [] } = useQuery({
+    queryKey: ['bookmarks'],
+    queryFn: fetchBookmarkedWords,
+  });
+
+  // 4. Tính toán các giá trị hiển thị từ dữ liệu thực tế
+  // TODO: Gán xp bằng user?.xp (nếu null thì mặc định 0)
+  const xp = user?.xp ?? 0;
+
+  // TODO: Gán streak bằng user?.streak (nếu null thì mặc định 0)
+  const streak = user?.streak ?? 0;
+
+  // TODO: Gán savedWordsCount bằng độ dài của mảng bookmarkedWords
+  const savedWordsCount = bookmarkedWords.length;
+
   const level = Math.floor(xp / 500) + 1;
   const xpInCurrentLevel = xp - (level - 1) * 500;
   const xpPercent = Math.min(100, Math.max(0, Math.round((xpInCurrentLevel / 500) * 100)));
+
   // 2. Tính toán derived state tại chỗ
   const xpToNextLevel = (level * 500) - xp;
   const achievements = [

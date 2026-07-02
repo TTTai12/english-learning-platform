@@ -121,7 +121,7 @@ export default function VocabularyPage() {
   const [learnedWords, setLearnedWords] = useState<Set<string>>(new Set());
   const [justSaved, setJustSaved] = useState<string | null>(null);
 
-  const { data: words = [], isLoading } = useQuery({
+  const { data: words = [], isLoading } = useQuery<Word[]>({
     queryKey: ['words', selectedTopic?.id],  // ← cache riêng theo từng topic
     queryFn: () => fetchWordsByTopic(selectedTopic!.id),  // truyền string id, không phải object
     enabled: !!selectedTopic,  // chỉ gọi API khi đã chọn chủ đề

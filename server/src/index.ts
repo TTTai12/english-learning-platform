@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js'; 
+import authRoutes from './routes/auth.js';
 import vocabRoutes from './routes/vocab.js'; // Import router từ vựng
 import { prisma } from './lib/prisma.js';
+import grammarRoutes from './routes/grammar.js';
+import speakingRouter from './routes/speaking.js';
 
 // Cấu hình dotenv để đọc file .env
 dotenv.config();
@@ -20,6 +22,7 @@ app.use(express.json());
 // Kết nối các route
 app.use('/api/auth', authRoutes);
 app.use('/api/vocabulary', vocabRoutes); // Đăng ký route từ vựng dưới tiền tố /api/vocabulary
+app.use('/api/grammar', grammarRoutes);
 
 // Endpoint test sức khỏe server (Health Check)
 app.get('/test', (req, res) => {
@@ -53,9 +56,159 @@ async function seedWords() {
         console.error('❌ Lỗi khi nạp dữ liệu mẫu:', error);
     }
 }
+// Thêm hàm này vào dưới hàm seedWords() và trên app.listen()
+async function seedGrammar() {
+    try {
+        const count = await prisma.grammarTopic.count();
+        if (count === 0) {
+            console.log('🌱 Database trống. Đang nạp ngữ pháp mẫu...');
+
+            const grammarData = [
+                // 1. Thì hiện tại đơn
+                {
+                    title: "Thì hiện tại đơn",
+                    description: "Diễn tả thói quen, sự thật hiển nhiên",
+                    icon: "Timer",
+                    color: "blue",
+                    patterns: [
+                        {
+                            name: "Câu khẳng định",
+                            formula: "S + V(s/es)",
+                            examples: [
+                                { english: "He plays soccer every Sunday.", vietnamese: "Anh ấy chơi bóng đá mỗi Chủ nhật." },
+                                { english: "The sun rises in the East.", vietnamese: "Mặt trời mọc ở hướng Đông." }
+                            ]
+                        },
+                        {
+                            name: "Câu phủ định",
+                            formula: "S + do/does + not + V",
+                            examples: [
+                                { english: "I do not like coffee.", vietnamese: "Tôi không thích cà phê." },
+                                { english: "She doesn't speak French.", vietnamese: "Cô ấy không nói tiếng Pháp." }
+                            ]
+                        }
+                    ]
+                },
+                // 2. Thì hiện tại tiếp diễn (đúng hình Figma)
+                {
+                    title: "Thì hiện tại tiếp diễn",
+                    description: "Hành động đang diễn ra tại thời điểm nói",
+                    icon: "RefreshCw",
+                    color: "emerald",
+                    patterns: [
+                        {
+                            name: "Câu khẳng định",
+                            formula: "S + am/is/are + V-ing",
+                            examples: [
+                                { english: "I am learning English now.", vietnamese: "Tôi đang học tiếng Anh bây giờ." },
+                                { english: "She is working on a new project.", vietnamese: "Cô ấy đang làm dự án mới." },
+                                { english: "They are watching a movie.", vietnamese: "Họ đang xem phim." }
+                            ]
+                        },
+                        {
+                            name: "Câu phủ định",
+                            formula: "S + am/is/are + not + V-ing",
+                            examples: [
+                                { english: "I'm not going to the party.", vietnamese: "Tôi không đi dự tiệc." },
+                                { english: "He isn't sleeping.", vietnamese: "Anh ấy không ngủ." },
+                                { english: "We aren't playing outside.", vietnamese: "Chúng tôi không chơi ngoài trời." }
+                            ]
+                        }
+                    ]
+                },
+                // 3. Thì quá khứ đơn
+                {
+                    title: "Thì quá khứ đơn",
+                    description: "Hành động đã xảy ra và kết thúc trong quá khứ",
+                    icon: "History",
+                    color: "purple",
+                    patterns: [
+                        {
+                            name: "Câu khẳng định",
+                            formula: "S + V2/ed",
+                            examples: [
+                                { english: "We visited Paris last year.", vietnamese: "Chúng tôi đã đến thăm Paris năm ngoái." },
+                                { english: "He bought a new car yesterday.", vietnamese: "Hôm qua anh ấy đã mua một chiếc xe mới." }
+                            ]
+                        },
+                        {
+                            name: "Câu phủ định",
+                            formula: "S + did + not + V",
+                            examples: [
+                                { english: "I did not see him at the party.", vietnamese: "Tôi đã không nhìn thấy anh ấy tại bữa tiệc." },
+                                { english: "They didn't finish their homework.", vietnamese: "Họ đã không hoàn thành bài tập về nhà." }
+                            ]
+                        }
+                    ]
+                },
+                // 4. Thì hiện tại hoàn thành
+                {
+                    title: "Thì hiện tại hoàn thành",
+                    description: "Hành động đã hoàn thành, có liên quan đến hiện tại",
+                    icon: "CheckCircle2",
+                    color: "amber",
+                    patterns: [
+                        {
+                            name: "Câu khẳng định",
+                            formula: "S + have/has + V3/ed",
+                            examples: [
+                                { english: "I have lived here for five years.", vietnamese: "Tôi đã sống ở đây được 5 năm." },
+                                { english: "She has already finished her work.", vietnamese: "Cô ấy đã hoàn thành công việc của mình rồi." }
+                            ]
+                        },
+                        {
+                            name: "Câu phủ định",
+                            formula: "S + have/has + not + V3/ed",
+                            examples: [
+                                { english: "They have not seen that movie yet.", vietnamese: "Họ vẫn chưa xem bộ phim đó." },
+                                { english: "He hasn't called me today.", vietnamese: "Hôm qua anh ấy vẫn chưa gọi cho tôi." }
+                            ]
+                        }
+                    ]
+                },
+                // 5. Thì tương lai đơn
+                {
+                    title: "Thì tương lai đơn",
+                    description: "Dự định, kế hoạch trong tương lai",
+                    icon: "TrendingUp",
+                    color: "rose",
+                    patterns: [
+                        {
+                            name: "Câu khẳng định",
+                            formula: "S + will + V",
+                            examples: [
+                                { english: "I will help you with your homework.", vietnamese: "Tôi sẽ giúp bạn làm bài tập về nhà." },
+                                { english: "We will travel to Japan next month.", vietnamese: "Chúng tôi sẽ đi du lịch Nhật Bản vào tháng tới." }
+                            ]
+                        },
+                        {
+                            name: "Câu phủ định",
+                            formula: "S + will + not + V",
+                            examples: [
+                                { english: "They will not join the meeting.", vietnamese: "Họ sẽ không tham gia cuộc họp." },
+                                { english: "She won't come to the party.", vietnamese: "Cô ấy sẽ không đến bữa tiệc." }
+                            ]
+                        }
+                    ]
+                }
+
+            ];
+
+            for (const topic of grammarData) {
+                await prisma.grammarTopic.create({ data: topic });
+            }
+            console.log('✅ Nạp ngữ pháp mẫu thành công!');
+        }
+    } catch (error) {
+        console.error('❌ Lỗi khi nạp dữ liệu ngữ pháp mẫu:', error);
+    }
+}
+
 
 // Khởi chạy app lắng nghe (listen) trên biến port đã khai báo ở trên
 app.listen(port, async () => {
     await seedWords();
+    await seedGrammar();
     console.log(`🚀 Server is running on port ${port}`);
 });
+app.use('/api/speaking', speakingRouter);
