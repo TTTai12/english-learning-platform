@@ -58,10 +58,33 @@ const model = genAI.getGenerativeModel({
 
 // 4. Hàm chính trích xuất từ vựng từ văn bản
 export const extractWordsFromText = async (text: string) => {
-    const prompt = `Analyze the following English text. Identify and extract new, important, or technical vocabulary words that are useful for learners to build flashcards. For each word, provide its IPA phonetic transcription, Vietnamese translation based on the context, a clear English example sentence using the word, and its difficulty level ('easy', 'medium', 'hard').
-    
-    Text to analyze:
-    "${text}"`;
+    const prompt = `You are an English vocabulary extraction engine for language learners (native language: Vietnamese).
+
+TASK: Read the ENTIRE text below from beginning to end. Extract vocabulary items useful for flashcards — this includes single words, phrasal verbs, collocations, and idiomatic expressions.
+
+SELECTION CRITERIA (a word/phrase qualifies if it meets ANY of these):
+- Not among the 3000 most common English words
+- A phrasal verb, idiom, or fixed collocation
+- A technical/domain-specific term
+- A word with multiple meanings where the contextual meaning is non-obvious
+- Useful for intermediate-to-advanced learners (CEFR B1 and above)
+
+COVERAGE REQUIREMENT: You MUST scan the full text section by section (beginning, middle, end) and distribute extracted items across the whole text — do not concentrate only on the first paragraphs. This text is approximately 2000 words long.
+
+QUANTITY REQUIREMENT: Extract between 8 and 20 vocabulary items. Do not stop early. If the text is dense with advanced vocabulary, lean toward the higher end. Do not deduplicate synonyms unnecessarily — if two different words both qualify, include both.
+
+For each item, provide:
+- word: the word or phrase as it appears in the text
+- ipa: IPA phonetic transcription
+- vietnamese: Vietnamese translation based on the CONTEXTUAL meaning in this text (not just dictionary default)
+- example: a new, clear English example sentence using the word (do not copy the sentence from the source text)
+- difficulty: "easy" | "medium" | "hard"
+
+OUTPUT FORMAT: Return ONLY a valid JSON array, no markdown code fences, no explanation, no preamble. Example:
+[{"word":"...","ipa":"...","vietnamese":"...","example":"...","difficulty":"medium"}]
+
+Text to analyze:
+"${text}"`;
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
@@ -138,4 +161,24 @@ export const analyzeSpeech = async (targetPhrase: string, userSpeech: string) =>
     const responseText = result.response.text();
 
     return JSON.parse(responseText);
+};
+// Hàm gọi AI tạo stream cho đoạn chat hội thoại
+export const getChatStream = async (message: string, history: any[], systemInstruction?: string) => {
+    // 1. Lấy model và truyền systemInstruction nhận từ client vào
+    const chatModel = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction: systemInstruction || "Bạn là một trợ lý ảo hỗ trợ học tiếng Anh giao tiếp thông minh tên là EnglishAI."
+    });
+
+    // 2. Vì history từ client gửi lên đã chuẩn cấu trúc [{ role, parts }] nên ta chỉ cần sao chép trực tiếp
+    const contents = [...history];
+
+    // 3. Đẩy tin nhắn mới nhất của người dùng vào mảng contents
+    contents.push({
+        role: 'user',
+        parts: [{ text: message }]
+    });
+
+    // 4. Trả về stream
+    return chatModel.generateContentStream({ contents });
 };

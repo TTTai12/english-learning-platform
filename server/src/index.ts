@@ -6,7 +6,7 @@ import vocabRoutes from './routes/vocab.js'; // Import router từ vựng
 import { prisma } from './lib/prisma.js';
 import grammarRoutes from './routes/grammar.js';
 import speakingRouter from './routes/speaking.js';
-
+import chatRouter from './routes/chat.js';
 // Cấu hình dotenv để đọc file .env
 dotenv.config();
 
@@ -23,6 +23,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/vocabulary', vocabRoutes); // Đăng ký route từ vựng dưới tiền tố /api/vocabulary
 app.use('/api/grammar', grammarRoutes);
+app.use('/api/chat', chatRouter);
 
 // Endpoint test sức khỏe server (Health Check)
 app.get('/test', (req, res) => {

@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import GrammarPage from './pages/Grammar';
 import SpeakingPage from './pages/Speaking';
+import ConversationPage from './pages/Conversation';
 
 
 export default function App() {
@@ -53,10 +54,9 @@ export default function App() {
           <Route path="speaking" element={<SpeakingPage />} />
 
           {/* Route cho trang conversation */}
-          <Route
-            path="conversation"
-            element={<div className="text-foreground p-4">Trang Hội thoại (Đang phát triển)</div>}
-          />
+
+          <Route path="conversation" element={<ConversationPage />} />
+
 
           {/* Route cho trang vocab notebook */}
           <Route
