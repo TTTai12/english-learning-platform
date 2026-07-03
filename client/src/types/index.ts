@@ -55,4 +55,28 @@ export interface SavedWord {
   savedAt: Date;
   reviewCount: number;
   nextReview: Date;
+}// Thêm vào cuối file client/src/types/index.ts
+
+export interface RoadmapTask {
+  id: string;
+  label: string;
+  desc: string;
+  section?: string; // Tên route chuyển trang
+  xpReward: number;
+  tag?: string;
+}
+
+export interface RoadmapPhase {
+  id: string;
+  number: number;
+  title: string;
+  subtitle: string;
+  duration: string;
+  icon: string;
+  color: string;
+  borderColor: string;
+  badgeColor: string;
+  lineColor: string;
+  tasks: RoadmapTask[];
+  unlockAfter?: number;
 }

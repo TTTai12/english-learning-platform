@@ -275,4 +275,27 @@ Trong trang **Lộ trình học tập (Roadmap)**, ta thiết lập sơ đồ tu
 *   **Q: Tại sao trong Roadmap này ta lại chuyển trạng thái Checkbox sang chế độ Read-only (chỉ hiển thị) thay vì cho phép click để đổi state?**
     *   *Trả lời:* Vì đây là lộ trình học tập đồng bộ thực tế dựa trên dữ liệu thật từ DB. Trạng thái hoàn thành của nhiệm vụ phản ánh đúng năng lực và tiến độ học thật của học viên (như số từ đã thuộc, số lần luyện nói). Việc chuyển sang read-only giúp ngăn chặn người dùng tự bấm "hoàn thành khống" nhiệm vụ mà không cần học.
 
+### 3. Kiến trúc Phân rã Component & Code Splitting (SRP)
+*   **Vấn đề thực tế:** Trang `Roadmap.tsx` ban đầu chứa tới gần 500 dòng code do lồng mảng dữ liệu tĩnh `phases` khổng lồ, khai báo interface và vẽ toàn bộ UI trong một file duy nhất. Điều này khiến code cực kỳ khó bảo trì và vi phạm nguyên tắc Đơn nhiệm (Single Responsibility Principle - SRP).
+*   **Giải pháp cấu trúc hóa:**
+    1.  **Constants Separation:** Chuyển mảng dữ liệu tĩnh `phases` và từ điển màu sắc `tagColors` sang file `client/src/constants/roadmap.ts`.
+    2.  **Shared Types:** Tập trung định nghĩa các interface `RoadmapTask` và `RoadmapPhase` tại file kiểu dữ liệu chung `client/src/types/index.ts`.
+    3.  **Subcomponents Splitting:** Tách các khối giao diện có nhiệm vụ độc lập ra các file riêng biệt nằm trong thư mục `client/src/components/features/roadmap/`:
+        *   `OverallProgress.tsx`: Chịu trách nhiệm hiển thị thanh tiến độ tổng thể và 4 chấm tròn mini indicator.
+        *   `TaskItem.tsx`: Chịu trách nhiệm hiển thị chi tiết một dòng nhiệm vụ, bao gồm checkbox, tag badge và nút "Bắt đầu".
+    4.  **Clean Page Assembly:** File chính `Roadmap.tsx` lúc này chỉ còn **219 dòng**, tập trung hoàn toàn vào việc gọi API lấy tiến độ từ DB (`useQuery`), đồng bộ store và lắp ráp các component con lại với nhau.
+
+### ❓ Câu hỏi phỏng vấn thường gặp
+*   **Q: Tại sao phải tách nhỏ component trong React? Tiêu chí nào để quyết định khi nào cần tách?**
+    *   *Trả lời:* Tách component giúp code có tính tái sử dụng cao, dễ bảo trì, dễ viết kiểm thử độc lập và tối ưu hóa số lượng re-render của React. 
+    *   Tiêu chí tách:
+        1.  **Dựa trên kích thước:** File vượt quá 150 dòng hoặc phần JSX quá sâu.
+        2.  **Dựa trên tính tái sử dụng:** Khối UI xuất hiện ở nhiều nơi (ví dụ: nút bấm, ô nhập liệu).
+        3.  **Dựa trên trách nhiệm (SRP):** Khi một khối UI có logic nghiệp vụ hoặc state nội bộ hoàn toàn độc lập (ví dụ: Modal đóng mở, Form validation).
+*   **Q: Khi tách component con như `TaskItem`, làm sao để gọi hành động điều hướng trang? Nên gọi trực tiếp hook `useNavigate` ở con hay truyền callback từ cha xuống?**
+    *   *Trả lời:* 
+        *   **Cách tốt nhất:** Nên khai báo `onNavigate` dạng callback ở `Props` của component con và truyền hàm từ component cha xuống. Việc này giúp component con trở thành "Pure Component" (hoặc Presentation Component) chỉ lo hiển thị, không phụ thuộc chặt chẽ (decouple) vào thư viện routing, giúp việc viết unit test cho component con cực kỳ dễ dàng bằng cách giả lập (mock) callback đó.
+        *   Nếu gọi trực tiếp `useNavigate` trong con, con sẽ bị ràng buộc cứng với React Router, khó đem đi tái sử dụng hoặc test độc lập.
+
+
 
