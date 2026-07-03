@@ -213,7 +213,7 @@ export default function RoadmapPage() {
         </div>
         <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 rounded-xl px-3 py-2 shrink-0">
           <Map className="w-4 h-4 text-primary" />
-          <span className="text-primary" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+          <span className="text-primary text-xs font-semibold">
             {totalDone}/{totalTasks} hoàn thành
           </span>
         </div>
@@ -418,7 +418,7 @@ export default function RoadmapPage() {
                       <div className="flex items-center gap-2">
                         <Star className="w-4 h-4 text-amber-500" />
                         <span className="text-foreground text-xs font-medium">
-                          Tổng XP giai đoạn {phase.number}
+                          Tổng XP Giai đoạn {phase.number}
                         </span>
                       </div>
                       <span className="text-amber-600 dark:text-amber-400 text-sm font-bold">
