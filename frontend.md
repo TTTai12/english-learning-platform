@@ -158,5 +158,40 @@ Trong trang **Hội thoại mô phỏng**, ta tích hợp tính năng chat thờ
 *   **Q: Tại sao dùng Fetch thay vì Axios khi làm chat Streaming?**
     *   *Trả lời:* Axios mặc định xử lý response dưới dạng toàn bộ bộ đệm (buffered response) và việc cấu hình đọc stream bằng Axios trên môi trường trình duyệt rất phức tạp (đòi hỏi xử lý adapter thô). Trong khi đó, Fetch API hỗ trợ native đối tượng `ReadableStream` thông qua `response.body`, giúp việc chia nhỏ dữ liệu và đọc từng chunk cực kỳ đơn giản và hiệu năng cao.
 *   **Q: Làm thế nào để phân tách câu trả lời tiếng Anh và câu dịch tiếng Việt đi kèm trong cùng một dòng chảy stream?**
-    *   *Trả lời:* Ta cấu hình ở System Prompt yêu cầu AI trả về nội dung theo quy tắc phân tách đặc biệt, ví dụ: `[Câu tiếng Anh] \nvn: [Câu dịch tiếng Việt]`. Ở Frontend, khi nhận được chuỗi chữ cộng dồn, ta dùng hàm `.split(/vn: |\\nvn: /)` để tách chuỗi tại điểm neo phân tách. Phần tử đầu tiên là câu tiếng Anh hiển thị chính, phần tử thứ hai là câu dịch hiển thị nhỏ ở dưới.
+    *   *Trả lời:* Ta cấu hình ở System Prompt yêu cầu AI trả về nội dung theo quy tắc phân tắc đặc biệt, ví dụ: `[Câu tiếng Anh] \nvn: [Câu dịch tiếng Việt]`. Ở Frontend, khi nhận được chuỗi chữ cộng dồn, ta dùng hàm `.split(/vn: |\\nvn: /)` để tách chuỗi tại điểm neo phân tách. Phần tử đầu tiên là câu tiếng Anh hiển thị chính, phần tử thứ hai là câu dịch hiển thị nhỏ ở dưới.
+
+---
+
+## 🗺️ PHẦN 8: LỘ TRÌNH HỌC TẬP & TIẾN ĐỘ THỰC TẾ (TASK 5.4)
+
+Trong trang **Lộ trình học tập (Roadmap)**, ta thiết lập sơ đồ tuyến tính 4 giai đoạn biểu diễn quá trình học từ vựng và kỹ năng. Tiến trình được liên kết trực tiếp với dữ liệu thật trong Database thông qua API thống kê động.
+
+### 1. Kỹ thuật truy vấn Gom nhóm & Tính toán động (Calculated Fields)
+*   **Vấn đề thực tế:** Nếu ta lưu sẵn trường `isCompleted` của từng nhiệm vụ vào bảng của User trong DB, ta sẽ phải liên tục cập nhật trường này mỗi khi user học thuộc một từ vựng mới hoặc lưu flashcard. Việc này dễ dẫn đến không đồng bộ dữ liệu (Out-of-sync) và phình to dung lượng DB.
+*   **Giải pháp (Computed Fields tại thời điểm gọi API):**
+    *   Khi client gọi API `/api/roadmap`, Backend sẽ truy vấn bảng `Progress` của user lọc theo điều kiện (`isLearned: true`, `isBookmarked: true`) kèm theo dữ liệu liên kết từ bảng `Word` (`include: { word: true }`).
+    *   Backend tự động đếm số từ đã học theo từng chủ đề (`dailyLearned`, `businessLearned`, `travelLearned`...) bằng hàm `.filter()` trên mảng.
+    *   Tự động so khớp tiến độ thực tế với các cột mốc:
+        *   Nhiệm vụ 1.1 hoàn thành khi: `dailyLearned >= 2`.
+        *   Nhiệm vụ 1.4 hoàn thành khi: Có ít nhất một từ có `reviewCount > 0` (đã nói thử với AI).
+        *   Nhiệm vụ 1.5 hoàn thành khi: Có ít nhất một từ được bookmark (`isBookmarked: true`).
+    *   Trả về mảng `completedTaskIds` cho Frontend. Giao diện sẽ hoàn toàn chính xác theo thời gian thực và không bao giờ bị lệch dữ liệu.
+
+### 2. Định dạng Cấu trúc Dữ liệu Tra cứu Nhanh với `Set`
+*   Để kiểm tra xem một nhiệm vụ có ID là `t1-1` đã hoàn thành hay chưa trong quá trình vẽ giao diện:
+    *   Nếu ta dùng mảng thông thường và gọi hàm `data.completedTaskIds.includes('t1-1')`, độ phức tạp thuật toán sẽ là $O(N)$ (phải duyệt qua toàn bộ mảng để tìm kiếm).
+    *   **Giải pháp tối ưu:** Chuyển đổi mảng thành cấu trúc dữ liệu **`Set`** trong Javascript:
+        ```ts
+        const completedTasks = new Set<string>(data?.completedTaskIds || []);
+        ```
+        Khi duyệt qua danh sách các chặng bay ở giao diện, ta kiểm tra bằng hàm `completedTasks.has(task.id)`. Độ phức tạp lúc này chỉ còn là **$O(1)$** (tra cứu trực tiếp cực nhanh, tối ưu hóa tối đa hiệu năng render của React).
+
+### ❓ Câu hỏi phỏng vấn thường gặp
+*   **Q: Sự khác nhau giữa `useNavigate` và thẻ `<Link>` của react-router-dom là gì?**
+    *   *Trả lời:* 
+        *   Thẻ `<Link>` dùng để khai báo liên kết điều hướng trực tiếp trên cây JSX (tương tự thẻ `<a>` nhưng ngăn chặn load lại toàn bộ trang web).
+        *   `useNavigate` là một hook dùng để điều hướng bằng lập trình (imperative navigation) bên trong các hàm xử lý sự kiện (event handlers) hoặc trong `useEffect` (ví dụ: chuyển trang sau khi gọi API thành công hoặc click button).
+*   **Q: Tại sao trong Roadmap này ta lại chuyển trạng thái Checkbox sang chế độ Read-only (chỉ hiển thị) thay vì cho phép click để đổi state?**
+    *   *Trả lời:* Vì đây là lộ trình học tập đồng bộ thực tế dựa trên dữ liệu thật từ DB. Trạng thái hoàn thành của nhiệm vụ phản ánh đúng năng lực và tiến độ học thật của học viên (như số từ đã thuộc, số lần luyện nói). Việc chuyển sang read-only giúp ngăn chặn người dùng tự bấm "hoàn thành khống" nhiệm vụ mà không cần học.
+
 

@@ -13,6 +13,7 @@ import Register from './pages/Register';
 import GrammarPage from './pages/Grammar';
 import SpeakingPage from './pages/Speaking';
 import ConversationPage from './pages/Conversation';
+import RoadmapPage from './pages/Roadmap';
 
 
 export default function App() {
@@ -38,11 +39,10 @@ export default function App() {
         <Route path="flashcards" element={<FlashcardsPage />} />
         {/* 2. Routes được bảo vệ (Phải đăng nhập mới được học) */}
         <Route element={<ProtectedRoute />}>
-          {/* Trang chính roadmap*/}
-          <Route
-            path="roadmap"
-            element={<div className="text-foreground p-4">Trang Lộ trình học tập (Đang phát triển)</div>}
-          />
+
+          {/* Trang chính roadmap */}
+          <Route path="roadmap" element={<RoadmapPage />} />
+
           {/* Route cho trang vocabulary */}
           <Route path="vocabulary" element={<VocabularyTopicsPage />} />
 

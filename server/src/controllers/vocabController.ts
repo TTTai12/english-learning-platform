@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { extractWordsFromText } from '../services/geminiService.js';
 
-// 1. Lấy danh sách từ vựng theo chủ đề (topic) kèm trạng thái học/bookmark của user hiện tại
 // 1. Lấy danh sách từ vựng theo chủ đề (topic) hoặc độ khó (difficulty) kèm trạng thái
 export const getWordsByTopic = async (req: Request, res: Response): Promise<void> => {
     try {
