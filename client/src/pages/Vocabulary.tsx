@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, Volume2, BookmarkPlus, BookmarkCheck, ChevronLeft, CheckCircle, Sparkles } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore'
+import { useAuthStore } from '../store/useAuthStore';
 import confetti from 'canvas-confetti';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchWordsByTopic, toggleWordBookmark, toggleWordLearned } from '../services/vocab';
@@ -135,8 +136,12 @@ export default function VocabularyPage() {
 
   const learnedMutation = useMutation({
     mutationFn: toggleWordLearned,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['words', selectedTopic?.id] }),
-
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['words', selectedTopic?.id] });
+      if (data?.user) {
+        useAuthStore.setState({ user: data.user });
+      }
+    },
   });
 
   /**

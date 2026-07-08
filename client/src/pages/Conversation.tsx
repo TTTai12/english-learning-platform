@@ -211,6 +211,7 @@ export default function ConversationPage() {
             alert('Đã xảy ra lỗi khi trò chuyện với AI.');
         } finally {
             setIsStreaming(false);
+            useAuthStore.getState().getMe();
         }
     };
 

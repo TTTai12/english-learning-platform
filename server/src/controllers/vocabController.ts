@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { extractWordsFromText } from '../services/geminiService.js';
+import { updateGamification } from '../services/gamificationService.js';
 
 // 1. Lấy danh sách từ vựng theo chủ đề (topic) hoặc độ khó (difficulty) kèm trạng thái
 export const getWordsByTopic = async (req: Request, res: Response): Promise<void> => {
@@ -112,26 +113,30 @@ export const toggleLearned = async (req: Request, res: Response): Promise<void> 
         // TODO 3: Nếu chưa có Progress -> Tạo mới với isLearned = true. Cộng 10 XP cho User.
         // Nếu đã có -> Cập nhật nghịch đảo (isLearned = !progress.isLearned). 
         // Nếu chuyển sang trạng thái đã học (true) -> Cộng 10 XP cho User.
-        const updatedProgress = await prisma.progress.upsert({
-            where: { userId_wordId: { userId, wordId } },
-            create: { userId, wordId, isLearned: true },
-            update: { isLearned: !progress?.isLearned }
-        });
-
         let xpEarned = 0;
-        if (updatedProgress.isLearned) {
-            xpEarned = 10;
-            await prisma.user.update({
-                where: { id: userId },
-                data: { xp: { increment: 10 } }
+        let userStats = null;
+
+        const updatedProgress = await prisma.$transaction(async (tx) => {
+            const up = await tx.progress.upsert({
+                where: { userId_wordId: { userId, wordId } },
+                create: { userId, wordId, isLearned: true },
+                update: { isLearned: !progress?.isLearned }
             });
-        }
+
+            if (up.isLearned) {
+                xpEarned = 10;
+                userStats = await updateGamification(userId, 10, tx);
+            }
+
+            return up;
+        });
 
         // TODO 4: Trả về kết quả res.json(...)
         res.status(200).json({
             message: updatedProgress.isLearned ? 'Đã đánh dấu đã học (+10 XP)' : 'Đã bỏ đánh dấu đã học',
             isLearned: updatedProgress.isLearned,
-            xpEarned
+            xpEarned,
+            user: userStats
         });
 
     } catch (error) {

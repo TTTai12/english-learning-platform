@@ -16,6 +16,7 @@ model User {
   password  String
   streak    Int        @default(7)
   xp        Int        @default(0)
+  lastActive DateTime?  @default(now())
   createdAt DateTime   @default(now())
   progress  Progress[]
 }

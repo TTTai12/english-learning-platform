@@ -3,6 +3,7 @@ import { Mic, MicOff, Volume2, Sparkles, ChevronLeft, Award } from 'lucide-react
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { analyzeSpeakingSpeech, type SpeakingAnalysisResponse } from '../services/speaking';
 import { fetchWordsByDifficulty } from '../services/vocab';
+import { useAuthStore } from '../store/useAuthStore';
 
 // GIẢI THÍCH: Khởi tạo đối tượng nhận diện giọng nói đa trình duyệt
 const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -59,8 +60,11 @@ export default function SpeakingPage() {
     const analyzeMutation = useMutation({
         mutationFn: ({ targetPhrase, userSpeech }: { targetPhrase: string; userSpeech: string }) =>
             analyzeSpeakingSpeech(targetPhrase, userSpeech),
-        onSuccess: (data) => {
+        onSuccess: (data: any) => {
             setAnalysis(data);
+            if (data?.user) {
+                useAuthStore.setState({ user: data.user });
+            }
         },
         onError: (err) => {
             console.error(err);

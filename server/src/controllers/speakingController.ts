@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { analyzeSpeech } from '../services/geminiService.js';
+import { updateGamification } from '../services/gamificationService.js';
 
 // TODO: 1. Nhận request từ Express và chuẩn bị xử lý bất đồng bộ (async)
 export const analyzeSpeaking = async (req: Request, res: Response): Promise<void> => {
     try {
         // TODO: 2. Bóc tách dữ liệu gửi từ Body của request (gồm câu mẫu và câu người dùng nói)
         const { targetPhrase, userSpeech } = req.body;
+        const userId = (req as any).userId;
 
         // TODO: 3. Kiểm tra dữ liệu đầu vào (Validation) - Nếu thiếu thì trả về lỗi 400 Bad Request
         if (!targetPhrase || !userSpeech) {
@@ -16,8 +18,17 @@ export const analyzeSpeaking = async (req: Request, res: Response): Promise<void
         // TODO: 4. Gọi hàm analyzeSpeech (đang chạy qua internet nên cần 'await') để Gemini so sánh và chấm điểm
         const analysis = await analyzeSpeech(targetPhrase, userSpeech);
 
+        // Cộng +15 XP cho user
+        let userStats = null;
+        if (userId) {
+            userStats = await updateGamification(userId, 15);
+        }
+
         // TODO: 5. Gửi trả kết quả phân tích (điểm số, từ đúng/sai) về cho Frontend dạng JSON sạch
-        res.status(200).json(analysis);
+        res.status(200).json({
+            ...analysis,
+            user: userStats
+        });
     } catch (error) {
         // TODO: 6. Khối catch bắt các lỗi mạng/AI sập để server không bị crash và trả về lỗi 500
         console.error('Lỗi khi chấm điểm nói:', error);

@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getChatStream } from '../services/geminiService.js';
+import { updateGamification } from '../services/gamificationService.js';
+
 // Khởi tạo Gemini SDK bằng API Key từ file .env
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -8,10 +10,16 @@ export const streamChat = async (req: Request, res: Response): Promise<void> => 
     try {
         // TODO: Bóc tách thêm systemInstruction từ req.body
         const { message, history, systemInstruction } = req.body;
+        const userId = (req as any).userId;
 
         if (!message) {
             res.status(400).json({ message: 'Tin nhắn không được để trống.' });
             return;
+        }
+
+        // Cộng +8 XP cho user khi gửi tin nhắn trò chuyện
+        if (userId) {
+            await updateGamification(userId, 8);
         }
 
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
