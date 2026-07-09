@@ -104,3 +104,17 @@ export const fetchWordsByDifficulty = async (difficulty: string) => {
     }
     return response.json();
 };
+
+// 8. Lấy dữ liệu hoạt động tuần từ database
+export const fetchWeeklyActivity = async () => {
+    const response = await fetch(`${API_URL}/weekly-activity`, {
+        method: 'GET',
+        headers: getHeaders(),
+    });
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Không thể tải hoạt động tuần');
+    }
+    return response.json();
+};
+

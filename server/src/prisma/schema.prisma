@@ -14,7 +14,7 @@ model User {
   id        String     @id @default(auto()) @map("_id") @db.ObjectId
   email     String     @unique
   password  String
-  streak    Int        @default(7)
+  streak    Int        @default(1)
   xp        Int        @default(0)
   lastActive DateTime?  @default(now())
   createdAt DateTime   @default(now())

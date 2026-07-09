@@ -1,5 +1,5 @@
 // client/src/components/features/roadmap/OverallProgress.tsx
-import { Target, Map } from 'lucide-react';
+import { Target } from 'lucide-react';
 import type { RoadmapPhase } from '../../../types';
 
 interface OverallProgressProps {
@@ -36,7 +36,7 @@ export function OverallProgress({ overallPct, totalDone, totalTasks, phases, com
                     <Target className="w-4 h-4 text-primary" />
                     <span className="text-foreground text-sm font-semibold">Tiến độ tổng thể</span>
                 </div>
-                <span className="text-primary text-sm font-bold">{overallPct}%</span>
+                <span className="text-primary text-sm font-bold">{totalDone}/{totalTasks} ({overallPct}%)</span>
             </div>
             <div className="h-3 bg-muted rounded-full overflow-hidden mb-3">
                 <div

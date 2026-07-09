@@ -4,14 +4,18 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 // 2. Định nghĩa cấu trúc một Từ Vựng (Bổ sung thêm trường độ khó và phiên âm)
 export interface Word {
   id: string;
-  word: string;         // Ví dụ: "Procrastinate"
-  phonetic?: string;    // Phiên âm (Optional vì có từ có từ không) - Ví dụ: "/prəˈkræstɪneɪt/"
-  meaning: string;      // Ví dụ: "Trì hoãn"
-  definition?: string;  // Định nghĩa bằng tiếng Anh (Optional)
-  example?: string;     // Câu ví dụ (Optional)
-  topic: string;        // Chủ đề (Ví dụ: "Work", "School")
-  difficulty: Difficulty; // Áp dụng Type Difficulty ở trên vào đây
-  isSaved: boolean;     // Trạng thái đã lưu vào sổ tay chưa
+  english: string;      // Từ tiếng Anh (Database field)
+  vietnamese: string;   // Nghĩa tiếng Việt (Database field)
+  word?: string;        // Tương thích ngược với Mock data cũ
+  meaning?: string;     // Tương thích ngược với Mock data cũ
+  phonetic?: string;
+  definition?: string;
+  example?: string;
+  topic: string;
+  difficulty: Difficulty;
+  isSaved: boolean;
+  isBookmarked?: boolean;
+  isLearned?: boolean;
 }
 
 // 3. Định nghĩa Tiến trình học tập (Bạn đã viết chuẩn)
@@ -79,4 +83,43 @@ export interface RoadmapPhase {
   lineColor: string;
   tasks: RoadmapTask[];
   unlockAfter?: number;
+}
+
+export interface VocabularyTopic {
+  id: string;
+  name: string;
+  icon: string;
+  wordCount: number;
+  learnedCount: number;
+  color: string;
+  borderColor: string;
+  iconBg: string;
+}
+
+export interface ExtractableCard {
+  id: string;
+  word: string;
+  phonetic: string;
+  meaning: string;
+  example: string;
+  topic: string;
+  difficulty: Difficulty;
+  isSaved: boolean;
+}
+
+export interface Scenario {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: 'Dễ' | 'Trung bình' | 'Khó';
+  icon: string;
+  systemInstruction: string;
+  firstMessage: string;
+}
+
+export interface Message {
+  id: string;
+  sender: 'user' | 'ai';
+  text: string;
+  translation?: string;
 }

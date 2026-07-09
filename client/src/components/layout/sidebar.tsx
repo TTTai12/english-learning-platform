@@ -34,17 +34,19 @@ export function Sidebar() {
   const streak = useAppStore((state) => state.streak);
   const theme = useAppStore((state) => state.theme);
   const toggleTheme = useAppStore((state) => state.toggleTheme);
-  
+
   // Zustand Auth Store state
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-  // 3. Tự tính toán các Derived State tại đây
-  const level = Math.floor(xp / 500) + 1; // ← Tự tính level dựa trên xp
-  const xpToNextLevel = (level * 500) - xp; // ← Tự tính số XP còn lại để lên cấp
+  // 3. Tự tính toán các Derived State tại đây (Đồng bộ động từ AuthStore nếu đã Đăng nhập)
+  const activeXp = isAuthenticated && user ? user.xp : xp;
+  const activeStreak = isAuthenticated && user ? user.streak : streak;
 
-  // Các phần UI bên dưới giữ nguyên không thay đổi gì cả!
-  const xpPercent = Math.min(100, Math.max(0, Math.round(((xp - (level - 1) * 500) / 500) * 100)));
+  const level = Math.floor(activeXp / 500) + 1;
+  const xpToNextLevel = (level * 500) - activeXp;
+  const xpPercent = Math.min(100, Math.max(0, Math.round(((activeXp - (level - 1) * 500) / 500) * 100)));
+
   const badge = { label: 'Học viên', color: 'from-emerald-400 to-teal-500' };
   const darkMode = theme === 'dark';
 
@@ -70,7 +72,7 @@ export function Sidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Flame className="w-4 h-4 text-orange-500" />
-            <span className="text-foreground text-sm font-semibold">{streak} ngày</span>
+            <span className="text-foreground text-sm font-semibold">{activeStreak} ngày</span>
           </div>
           <div className={cn("bg-gradient-to-r text-white px-2 py-0.5 rounded-full text-[10px] font-bold", badge.color)}>
             Lv.{level} {badge.label}
@@ -79,7 +81,7 @@ export function Sidebar() {
 
         <div>
           <div className="flex items-center justify-between mb-1 text-[10px]">
-            <span className="text-muted-foreground">{xp} XP tổng</span>
+            <span className="text-muted-foreground">{activeXp} XP tổng</span>
             <span className="text-muted-foreground">còn {xpToNextLevel} XP → Lv.{level + 1}</span>
           </div>
           <div className="h-1.5 bg-muted rounded-full overflow-hidden">

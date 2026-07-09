@@ -298,3 +298,63 @@ export const generateFlashcards = async (req: Request, res: Response): Promise<v
     }
 };
 
+const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+// 7. Lấy dữ liệu hoạt động tuần thực tế từ Progress Database
+export const getWeeklyActivity = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = (req as any).userId;
+
+        const today = new Date();
+        const startOfPeriod = new Date();
+        startOfPeriod.setDate(today.getDate() - 6);
+        startOfPeriod.setHours(0, 0, 0, 0);
+
+        const progressList = await prisma.progress.findMany({
+            where: {
+                userId,
+                createdAt: {
+                    gte: startOfPeriod
+                }
+            }
+        });
+
+        const activityData = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(startOfPeriod);
+            date.setDate(startOfPeriod.getDate() + i);
+            const dayName = dayNames[date.getDay()];
+
+            const startOfDay = new Date(date);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(date);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const dayProgress = progressList.filter(p => {
+                const pDate = new Date(p.createdAt);
+                return pDate >= startOfDay && pDate <= endOfDay;
+            });
+
+            const wordsLearned = dayProgress.filter(p => p.isLearned).length;
+            const wordsReviewed = dayProgress.filter(p => p.reviewCount > 0).length;
+
+            let minutes = (wordsLearned * 2) + (wordsReviewed * 1);
+            if (minutes === 0 && dayProgress.length > 0) {
+                minutes = 3;
+            }
+
+            activityData.push({
+                day: dayName,
+                minutes: minutes || 0,
+                words: wordsLearned || 0
+            });
+        }
+
+        res.status(200).json(activityData);
+    } catch (error) {
+        console.error('Lỗi khi lấy hoạt động tuần:', error);
+        res.status(500).json({ message: 'Có lỗi xảy ra trên server' });
+    }
+};
+
+

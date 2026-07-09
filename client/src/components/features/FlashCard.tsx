@@ -25,7 +25,7 @@ export function FlashCard({ word }: FlashCardProps) {
         {/* MẶT TRƯỚC: Hiển thị từ tiếng Anh (Chỉ hiện khi chưa lật) */}
         <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-6 bg-card border border-border rounded-2xl shadow-sm [backface-visibility:hidden]">
           <span className="text-2xl font-bold text-primary tracking-tight">
-            {word.word} {/* Đọc từ tiếng Anh */}
+            {word.word || word.english} {/* Đọc từ tiếng Anh */}
           </span>
           {word.phonetic && (
             <span className="text-muted-foreground text-sm mt-2 font-mono">
@@ -38,7 +38,7 @@ export function FlashCard({ word }: FlashCardProps) {
         {/* MẶT SAU: Hiển thị nghĩa tiếng Việt (Bị giấu đi, lật ra mới thấy) */}
         <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-6 bg-primary text-primary-foreground rounded-2xl shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
           <span className="text-xl font-semibold text-center">
-            {word.meaning} {/* Đọc nghĩa tiếng Việt */}
+            {word.meaning || word.vietnamese} {/* Đọc nghĩa tiếng Việt */}
           </span>
           {word.example && (
             <p className="text-xs text-primary-foreground/80 text-center italic mt-3 max-w-[80%]">

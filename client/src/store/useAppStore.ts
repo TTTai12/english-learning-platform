@@ -20,7 +20,7 @@ export const useAppStore = create<AppState>()(
     persist(
         (set) => ({
             xp: 0,
-            streak: 7,
+            streak: 1,
             savedWords: [],
             theme: 'light',
 

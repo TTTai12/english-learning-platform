@@ -28,7 +28,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             data: {
                 email,
                 password: hashedPassword,
-                streak: 7,
+                streak: 1,
                 xp: 0
             }
         });

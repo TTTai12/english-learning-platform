@@ -1,6 +1,6 @@
 // client/src/pages/Roadmap.tsx
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Lock, Star, Map } from 'lucide-react';
+import { ChevronDown, ChevronRight, Lock, Map } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
