@@ -1,134 +1,222 @@
-# 🇬🇧 EnglishAI - Nền tảng học tiếng Anh thông minh với AI
+﻿# 🎓 EnglishAI — Nền tảng học tiếng Anh cá nhân hóa với AI
 
-Chào mừng bạn đến với **EnglishAI**, một nền tảng học tiếng Anh toàn diện giúp học viên nâng cao vốn từ vựng, theo dõi tiến trình học tập hàng ngày và luyện tập qua các phương pháp học hiện đại (Flashcards, Spaced Repetition) với sự hỗ trợ của công nghệ AI.
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)](https://vercel.com)
+[![Render](https://img.shields.io/badge/Backend-Render-46E3B7?logo=render)](https://render.com)
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB_Atlas-47A248?logo=mongodb)](https://mongodb.com)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)](https://typescriptlang.org)
 
-Dự án này được chia làm hai phần chính:
-*   **`client/` (Frontend):** Ứng dụng web React SPA viết bằng TypeScript, xây dựng trên Vite và tạo kiểu dáng bằng Tailwind CSS v4.
-*   **`server/` (Backend):** Restful API viết bằng Express, Node.js, TypeScript và sử dụng Prisma ORM kết nối với cơ sở dữ liệu MongoDB.
+> Ứng dụng web full-stack giúp người dùng học từ vựng tiếng Anh thông minh hơn thông qua AI, Flashcards và luyện nói với nhận diện giọng nói thực tế.
 
----
-
-## 🛠️ Công nghệ sử dụng (Tech Stack)
-
-### 1. Frontend (Client)
-*   **Core:** React 18 (TypeScript) + Vite
-*   **Styling:** Tailwind CSS v4 (sử dụng `@tailwindcss/vite` biên dịch cực nhanh)
-*   **State Management:** Zustand (quản lý state đăng nhập và cấu hình ứng dụng)
-*   **Routing:** React Router v7
-*   **Components:** Shadcn UI (được tích hợp với Radix Primitives)
-*   **Thư viện hỗ trợ:** Recharts (vẽ biểu đồ tiến trình học), Canvas Confetti (hiệu ứng chúc mừng)
-
-### 2. Backend (Server)
-*   **Core:** Node.js, Express (TypeScript)
-*   **Database ORM:** Prisma ORM
-*   **Database:** MongoDB (lưu trữ thông tin người dùng, từ vựng và tiến trình học tập)
-*   **Xác thực bảo mật:** JSON Web Token (JWT) cho phiên đăng nhập, `bcryptjs` để băm mật khẩu bảo mật.
+🔗 **Live Demo:** [https://english-ai.vercel.app](https://english-ai.vercel.app)
+📂 **Backend API:** [https://english-ai-server.onrender.com](https://english-ai-server.onrender.com)
 
 ---
 
-## ✨ Các tính năng chính
+## ✨ Tính năng nổi bật
 
-*   [x] **Xác thực bảo mật:** Đăng ký tài khoản mới, Đăng nhập và tự động khôi phục phiên hoạt động khi tải lại trang qua API `/api/auth/me`.
-*   [x] **Theo dõi học tập (Gamification):** Hệ thống tích điểm kinh nghiệm (XP) và số ngày học liên tục (Streak) để khuyến khích học viên duy trì thói quen học tập.
-*   [x] **Sổ tay từ vựng (Vocabulary Notebook):** Người dùng có thể lưu các từ vựng cần học vào sổ tay cá nhân.
-*   [x] **Học từ vựng theo chủ đề:** Phân chia từ vựng theo chủ đề và mức độ khó dễ (`easy`, `medium`, `hard`).
-*   [x] **Luyện tập qua Flashcards:** Giao diện thẻ ghi nhớ thông minh giúp ghi nhớ từ vựng lâu hơn qua phương pháp lặp lại ngắt quãng (Spaced Repetition).
+| Tính năng | Mô tả |
+|---|---|
+| 🤖 **AI Flashcard Generator** | Dán văn bản bất kỳ — Gemini AI tự động bóc tách từ vựng, phiên âm, dịch nghĩa và phân loại độ khó |
+| 🧠 **Spaced Repetition** | Thuật toán lặp lại ngắt quãng tự động tính chu kỳ ôn tập [1→3→7→14→30 ngày] theo lịch sử trả lời |
+| 🎤 **AI Speaking Coach** | Luyện nói với Web Speech API, AI chấm điểm phát âm và chỉ ra lỗi sai cụ thể |
+| 📚 **Vocab Notebook** | Sổ tay từ vựng cá nhân, bookmark từ yêu thích theo chủ đề |
+| 🗺️ **Learning Roadmap** | Lộ trình học 4 giai đoạn có hệ thống, mở khóa dần theo tiến độ thực tế |
+| 🔐 **JWT Authentication** | Đăng ký / Đăng nhập bảo mật, mã hóa mật khẩu bcrypt |
 
 ---
 
-## 📂 Cấu trúc thư mục dự án
+## 🏗️ Kiến trúc hệ thống
 
-```text
-study english website/
-├── client/                 # Mã nguồn Frontend (React + Vite + TS)
-│   ├── src/
-│   │   ├── components/     # Các UI Component dùng chung (Layout, UI)
-│   │   ├── pages/          # Các màn hình chính (Dashboard, Flashcards, Vocab,...)
-│   │   ├── store/          # Zustand stores quản lý State (Auth, App)
-│   │   └── types/          # Định nghĩa kiểu TypeScript
-├── server/                 # Mã nguồn Backend (Express + Prisma + TS)
-│   ├── src/
-│   │   ├── controllers/    # Hàm xử lý logic cho các API
-│   │   ├── middleware/     # Middleware trung gian (ví dụ: verifyToken)
-│   │   ├── prisma/         # Định nghĩa Schema Database (Prisma Schema)
-│   │   ├── routes/         # Khai báo các đường dẫn API
-│   │   └── index.ts        # File chạy chính của Backend
+```
+┌─────────────────────────────────────────────────────┐
+│                     CLIENT (Vercel)                  │
+│  React 18 + TypeScript + Tailwind CSS v4 + Vite      │
+│  Zustand (Global State) + TanStack Query (Cache)     │
+└──────────────────────┬──────────────────────────────┘
+                       │ REST API (JWT Auth)
+┌──────────────────────▼──────────────────────────────┐
+│                    SERVER (Render)                   │
+│           Express 5 + TypeScript + Prisma ORM        │
+│              JWT Authentication + bcryptjs           │
+└──────────────────────┬──────────────────────────────┘
+          ┌────────────┴────────────┐
+          │                        │
+┌─────────▼──────────┐   ┌─────────▼──────────┐
+│  MongoDB Atlas     │   │    Gemini AI API    │
+│  (Database)        │   │  (Google DeepMind)  │
+└────────────────────┘   └────────────────────┘
 ```
 
 ---
 
-## 🚀 Hướng dẫn cài đặt và Chạy thử dự án
+## 🛠️ Tech Stack
 
-### Yêu cầu hệ thống (Prerequisites)
-*   Đã cài đặt **Node.js** (Khuyên dùng bản LTS v18 trở lên).
-*   Có tài khoản **MongoDB Atlas** (Online) hoặc cài đặt **MongoDB Community Server** (Offline) chạy trên cổng mặc định `27017`.
+### Frontend
+- **Framework:** React 18 + TypeScript + Vite
+- **Styling:** Tailwind CSS v4 (Dark/Light Mode)
+- **State Management:** Zustand 5 (persist middleware)
+- **Data Fetching:** TanStack Query v5 (caching, invalidation)
+- **Routing:** React Router v6
 
----
+### Backend
+- **Runtime:** Node.js + Express 5
+- **Language:** TypeScript (ESM)
+- **ORM:** Prisma 6
+- **Authentication:** JWT + bcryptjs
+- **AI Integration:** Google Gemini API (`@google/generative-ai`)
 
-### Bước 1: Cấu hình và khởi chạy Backend (Server)
-
-1.  Di chuyển terminal vào thư mục server và cài đặt các dependencies:
-    ```bash
-    cd server
-    npm install
-    ```
-
-2.  Tạo file `.env` từ file mẫu `.env.example` (nếu chưa có):
-    ```bash
-    # Trên Windows (PowerShell)
-    copy .env.example .env
-    # Hoặc tự tạo file .env bằng tay
-    ```
-
-3.  Mở file `.env` lên và cấu hình chuỗi kết nối MongoDB của bạn cùng mã khóa JWT:
-    ```env
-    PORT=5000
-    DATABASE_URL="mongodb://localhost:27017/englishai"
-    JWT_SECRET="super_secret_jwt_key_english_ai_2026"
-    ```
-
-4.  Sinh mã client cho Prisma và đẩy cấu hình Schema lên MongoDB:
-    ```bash
-    npm run db:generate
-    npm run db:push
-    ```
-
-5.  Khởi chạy server ở chế độ phát triển (Development):
-    ```bash
-    npm run dev
-    ```
-    *Server của bạn sẽ chạy tại:* `http://localhost:5000`
+### Database
+- **DBMS:** MongoDB Atlas (Cloud)
+- **Schema:** Prisma Schema (User, Word, Progress)
 
 ---
 
-### Bước 2: Cài đặt và khởi chạy Frontend (Client)
+## 🗄️ Cấu trúc thư mục
 
-1.  Mở một cửa sổ Terminal mới, di chuyển vào thư mục client và cài đặt:
-    ```bash
-    cd client
-    npm install
-    ```
-
-2.  Khởi chạy Frontend ở chế độ phát triển:
-    ```bash
-    npm run dev
-    ```
-    *Ứng dụng client sẽ chạy tại:* `http://localhost:5173` hoặc `http://localhost:3000` (Theo dõi cổng hiển thị trong Terminal).
-
-3.  Mở trình duyệt truy cập vào địa chỉ trên để bắt đầu trải nghiệm ứng dụng!
+```
+study-english-website/
+├── client/                    # React Frontend
+│   ├── src/
+│   │   ├── components/        # UI Components tái sử dụng
+│   │   ├── pages/             # Các trang chính
+│   │   │   ├── Flashcards.tsx
+│   │   │   ├── Speaking.tsx
+│   │   │   ├── Vocabulary.tsx
+│   │   │   ├── Grammar.tsx
+│   │   │   └── Roadmap.tsx
+│   │   ├── services/          # Hàm gọi API (fetch wrapper)
+│   │   ├── store/             # Zustand stores
+│   │   └── index.css          # Tailwind v4 theme config
+│   └── package.json
+│
+├── server/                    # Express Backend
+│   ├── src/
+│   │   ├── controllers/       # Business logic
+│   │   │   ├── authController.ts
+│   │   │   └── vocabController.ts
+│   │   ├── routes/            # API route definitions
+│   │   ├── middleware/        # Auth middleware (JWT verify)
+│   │   └── lib/
+│   │       └── prisma.ts      # Prisma client singleton
+│   ├── prisma/
+│   │   └── schema.prisma      # Database schema
+│   └── package.json
+│
+└── README.md
+```
 
 ---
 
-## 🔒 Tài liệu API (Auth Endpoints)
+## 🚀 Hướng dẫn chạy dự án Local
 
-Hệ thống xác thực của Backend cung cấp các endpoint sau tại địa chỉ mặc định `http://localhost:5000/api/auth`:
+### Yêu cầu môi trường
+- Node.js >= 18
+- MongoDB (Local hoặc MongoDB Atlas)
+- Google Gemini API Key
 
-| Endpoint | Method | Header yêu cầu | Request Body | Mô tả |
-| :--- | :--- | :--- | :--- | :--- |
-| `/register` | `POST` | *None* | `{ email, password }` | Đăng ký tài khoản mới |
-| `/login` | `POST` | *None* | `{ email, password }` | Đăng nhập tài khoản |
-| `/me` | `GET` | `Authorization: Bearer <token>` | *None* | Lấy thông tin tài khoản hiện tại |
+### 1. Clone repository
+```bash
+git clone https://github.com/<your-username>/english-ai.git
+cd english-ai
+```
+
+### 2. Cấu hình Backend
+```bash
+cd server
+cp .env.example .env
+```
+
+Mở file `.env` và điền đầy đủ:
+```env
+DATABASE_URL="mongodb://localhost:27017/englishai"
+JWT_SECRET="your_jwt_secret_key_here"
+GEMINI_API_KEY="your_gemini_api_key_here"
+PORT=5000
+```
+
+```bash
+npm install
+npx prisma generate
+npx prisma db push
+npm run dev
+```
+
+### 3. Cấu hình Frontend
+```bash
+cd ../client
+cp .env.example .env
+```
+
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+```bash
+npm install
+npm run dev
+```
+
+✅ Frontend chạy tại: `http://localhost:5173`
+✅ Backend chạy tại: `http://localhost:5000`
 
 ---
 
-Chúc bạn có những trải nghiệm học tập và phát triển dự án tuyệt vời!
+## 📡 API Endpoints
+
+### Authentication
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| `POST` | `/api/auth/register` | Đăng ký tài khoản mới |
+| `POST` | `/api/auth/login` | Đăng nhập, nhận JWT token |
+| `GET` | `/api/auth/me` | Lấy thông tin user từ token |
+
+### Vocabulary & Flashcards
+| Method | Endpoint | Mô tả | Auth |
+|--------|----------|-------|------|
+| `GET` | `/api/vocab/topics` | Lấy danh sách chủ đề từ vựng | ✅ |
+| `POST` | `/api/vocab/generate-flashcards` | AI tạo bộ thẻ từ văn bản | ✅ |
+| `POST` | `/api/vocab/review` | Cập nhật kết quả ôn tập (SRS) | ✅ |
+| `POST` | `/api/vocab/bookmark` | Lưu từ vào sổ tay cá nhân | ✅ |
+
+### Speaking
+| Method | Endpoint | Mô tả | Auth |
+|--------|----------|-------|------|
+| `POST` | `/api/speaking/analyze` | AI chấm điểm phát âm | ✅ |
+
+---
+
+## 🧩 Kỹ thuật nổi bật
+
+### Spaced Repetition Algorithm
+```typescript
+// Chu kỳ ôn tập tăng dần nếu trả lời đúng
+const intervals = [1, 3, 7, 14, 30]; // ngày
+const nextInterval = intervals[Math.min(currentLevel, intervals.length - 1)];
+const nextReview = new Date(Date.now() + nextInterval * 24 * 60 * 60 * 1000);
+```
+
+### TanStack Query Caching
+```typescript
+// Cache dữ liệu từ vựng, tự động re-fetch khi stale
+const { data } = useQuery({
+  queryKey: ['vocab', topicId],
+  queryFn: () => fetchWordsByTopic(topicId),
+  staleTime: 5 * 60 * 1000, // 5 phút
+});
+```
+
+---
+
+## 👨‍💻 Tác giả
+
+**[Tên của bạn]**
+📧 Email: your.email@gmail.com
+💼 LinkedIn: [linkedin.com/in/your-profile](https://linkedin.com)
+🐙 GitHub: [github.com/your-username](https://github.com)
+
+---
+
+## 📄 License
+
+MIT License — Free to use for learning and portfolio purposes.

@@ -34,3 +34,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# Documentation files
+architecture.md
+frontend.md
+gemini_guide.md
+mongodb_guide.md
+fresher_interview_guide.md
