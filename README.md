@@ -8,8 +8,8 @@
 
 > Ứng dụng web full-stack giúp người dùng học từ vựng tiếng Anh thông minh hơn thông qua AI, Flashcards và luyện nói với nhận diện giọng nói thực tế.
 
-🔗 **Live Demo:** [https://english-ai.vercel.app](https://english-ai.vercel.app)
-📂 **Backend API:** [https://english-ai-server.onrender.com](https://english-ai-server.onrender.com)
+🔗 **Live Demo:** [https://english-ai.vercel.app](https://english-learning-platform-lyart.vercel.app/)
+📂 **Backend API:** [https://english-ai-server.onrender.com](https://english-learning-platform-6hm9.onrender.com)
 
 ---
 
@@ -211,9 +211,9 @@ const { data } = useQuery({
 ## 👨‍💻 Tác giả
 
 **[Tên của bạn]**
-📧 Email: your.email@gmail.com
-💼 LinkedIn: [linkedin.com/in/your-profile](https://linkedin.com)
-🐙 GitHub: [github.com/your-username](https://github.com)
+📧 Email: tientantai12@gmail.com
+💼 LinkedIn: [linkedin.com/in/your-profile](https://www.linkedin.com/in/tai-tien-tan-a2227b323/)
+🐙 GitHub: [github.com/your-username](https://github.com/TTTai12)
 
 ---
 
