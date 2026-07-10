@@ -1,6 +1,7 @@
 import { useAuthStore } from '../store/useAuthStore';
+import { API_BASE_URL } from '../constants/api';
 
-const API_URL = 'http://localhost:5000/api/speaking';
+const API_URL = `${API_BASE_URL}/api/speaking`;
 
 // Hàm lấy Token đăng nhập đính kèm vào Header
 const getHeaders = () => {

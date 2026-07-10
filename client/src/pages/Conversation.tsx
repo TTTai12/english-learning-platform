@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { RotateCcw, X } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import { API_BASE_URL } from '../constants/api';
 import { ChatBubble } from '../components/features/conversation/ChatBubble';
 import { ChatInput } from '../components/features/conversation/ChatInput';
 import { ScenarioSelector } from '../components/features/conversation/ScenarioSelector';
@@ -63,7 +64,7 @@ export default function ConversationPage() {
     }));
 
     try {
-      const response = await fetch('http://localhost:5000/api/chat/stream', {
+      const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

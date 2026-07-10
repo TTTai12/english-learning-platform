@@ -1,6 +1,7 @@
 import { useAuthStore } from '../store/useAuthStore';
+import { API_BASE_URL } from '../constants/api';
 
-const API_URL = 'http://localhost:5000/api/grammar';
+const API_URL = `${API_BASE_URL}/api/grammar`;
 
 // Helper lấy headers chứa JWT token tự động
 const getHeaders = () => {

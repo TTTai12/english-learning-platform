@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, Lock, Map } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { API_BASE_URL } from '../constants/api';
 import confetti from 'canvas-confetti';
 
 import { phases, tagColors } from '../constants/roadmap';
@@ -19,7 +20,7 @@ export default function RoadmapPage() {
     const { data, isLoading } = useQuery<{ completedTaskIds: string[] }>({
         queryKey: ['roadmap-progress'],
         queryFn: async () => {
-            const res = await fetch('http://localhost:5000/api/roadmap', {
+            const res = await fetch(`${API_BASE_URL}/api/roadmap`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!res.ok) throw new Error('Không thể tải tiến độ lộ trình');

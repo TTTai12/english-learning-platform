@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { API_BASE_URL } from '../constants/api';
+
 export interface User {
   id: string;
   email: string;
@@ -18,7 +20,8 @@ interface AuthState {
   getMe: () => Promise<void>;
   clearError: () => void;
 }
-const API_URL = 'http://localhost:5000/api/auth';
+
+const API_URL = `${API_BASE_URL}/api/auth`;
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
