@@ -28,9 +28,9 @@ app.use('/api/grammar', grammarRoutes);
 app.use('/api/chat', chatRouter);
 app.use('/api/roadmap', roadmapRoutes);
 
-// Endpoint test sức khỏe server (Health Check)
-app.get('/test', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date() });
+// Endpoint Health Check — dùng cho cron-job.org để giữ Render server luôn sống
+app.get('/health', (_req, res) => {
+    res.status(200).send('ok');
 });
 
 // Hàm tự động nạp (seed) dữ liệu từ vựng mẫu nếu database đang trống
